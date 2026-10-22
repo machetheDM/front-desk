@@ -1,0 +1,33 @@
+# DEMO TENANT. Made-up company. Loaded only into DEMO_TENANT_ID (frontdesk/tenancy.py);
+# frontdesk/demo_tenant.py refuses any other target, and a test asserts it.
+tenant:
+  name: Bushveld Solar & Electrical
+  slug: bushveld-demo
+  assistant_name: Bushveld assistant
+  timezone: Africa/Johannesburg
+  office_hours:
+    mon-fri: ["08:00", "17:00"]
+    sat: ["08:00", "12:00"]
+    sun: null
+
+staff:
+  - { display_name: Naledi Mokoena, email: naledi@bushveldsolar.example, role: owner, handles_topics: [pricing, quote, discount, sales, general] }
+  - { display_name: Pieter van Wyk, email: pieter@bushveldsolar.example, role: agent, handles_topics: [warranty, fault, technical, installation] }
+  - { display_name: Thabo Maluleke, email: thabo@bushveldsolar.example, role: agent, handles_topics: [payment, booking, cancellation, order_status] }
+
+# Structured facts the typed tools read. The same facts are in the approved documents; tools
+# exist so that a lookup is exact rather than generated.
+config:
+  service_zones:
+    A: { travel_fee_zar: 0, assessment_fee_zar: 650, places: [Polokwane CBD, Polokwane, Bendor, Flora Park, Fauna Park, Westenburg, Ivy Park, Sterpark, Seshego] }
+    B: { travel_fee_zar: 850, assessment_fee_zar: 950, places: [Mankweng, Lebowakgomo, Moletjie, Mokopane] }
+    C: { travel_fee_zar: 1900, assessment_fee_zar: 950, places: [Marble Hall, Groblersdal, Tzaneen, Louis Trichardt] }
+
+# The demo "order system" behind the order-status adapter (frontdesk/integrations/orders.py).
+# Status is only told to the number the order was placed from: an order reference alone is
+# guessable. Contacts use the invalid +27 00 prefix so they can never be a real person's number.
+orders:
+  BSE-1042: { status: installation_booked, detail: "Installation booked; our office will phone you the day before.", contact: "+27000000042" }
+  BSE-1057: { status: awaiting_deposit, detail: "Quote accepted; waiting for the 50% deposit.", contact: "+27000000057" }
+  BSE-1061: { status: completed, detail: "Installed and Certificate of Compliance issued.", contact: "+27000000061" }
+  BSE-1073: { status: awaiting_municipal_approval, detail: "System running in backup mode; municipal registration submitted.", contact: "+27000000073" }

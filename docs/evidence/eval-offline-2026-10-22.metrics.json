@@ -1,0 +1,340 @@
+{
+  "pipeline": "offline",
+  "generated_at": "2026-10-22T23:46:34.690288+00:00",
+  "dataset": "evals/datasets/bushveld.synthetic.yaml",
+  "headline": {
+    "n": 74,
+    "retrieval_recall_at_5": 0.9592,
+    "retrieval_recall_at_1": 0.898,
+    "retrieval_mrr": 0.9235,
+    "answer_correctness": 0.7843,
+    "groundedness": 1.0,
+    "handoff_correct_rate": 0.8514,
+    "unanswerable_handed_over": 0.875,
+    "forbidden_fact_rate": 0.0,
+    "pii_reaching_model": 0,
+    "answered_share": 0.5676,
+    "latency_ms_p50": 5.7,
+    "latency_ms_p95": 8.7,
+    "by_route": {
+      "small": {
+        "answers": 56,
+        "cost_usd_per_answer": 0.0,
+        "latency_ms_p50": 6.1
+      },
+      "large": {
+        "answers": 1,
+        "cost_usd_per_answer": 0.0,
+        "latency_ms_p50": 7.5
+      }
+    },
+    "redteam_attack_success_rate": 0.0,
+    "judge_cohen_kappa": null
+  },
+  "splits": {
+    "dev": {
+      "n": 36,
+      "retrieval_recall_at_5": 1.0,
+      "retrieval_recall_at_1": 0.92,
+      "retrieval_mrr": 0.96,
+      "answer_correctness": 0.9231,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 0.9444,
+      "unanswerable_handed_over": 1.0,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 0.6667,
+      "latency_ms_p50": 5.8,
+      "latency_ms_p95": 8.1,
+      "by_route": {
+        "small": {
+          "answers": 27,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 6.2
+        }
+      }
+    },
+    "holdout": {
+      "n": 40,
+      "retrieval_recall_at_5": 0.88,
+      "retrieval_recall_at_1": 0.64,
+      "retrieval_mrr": 0.7575,
+      "answer_correctness": 0.52,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 0.7,
+      "unanswerable_handed_over": 0.8333,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 0.375,
+      "latency_ms_p50": 6.1,
+      "latency_ms_p95": 9.2,
+      "by_route": {
+        "small": {
+          "answers": 34,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 6.5
+        }
+      }
+    },
+    "test": {
+      "n": 74,
+      "retrieval_recall_at_5": 0.9592,
+      "retrieval_recall_at_1": 0.898,
+      "retrieval_mrr": 0.9235,
+      "answer_correctness": 0.7843,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 0.8514,
+      "unanswerable_handed_over": 0.875,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 0.5676,
+      "latency_ms_p50": 5.7,
+      "latency_ms_p95": 8.7,
+      "by_route": {
+        "small": {
+          "answers": 56,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 6.1
+        },
+        "large": {
+          "answers": 1,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 7.5
+        }
+      }
+    }
+  },
+  "by_language": {
+    "af-en": {
+      "n": 3,
+      "retrieval_recall_at_5": 1.0,
+      "retrieval_recall_at_1": 1.0,
+      "retrieval_mrr": 1.0,
+      "answer_correctness": 1.0,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 1.0,
+      "unanswerable_handed_over": 1.0,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 1.0,
+      "latency_ms_p50": 5.7,
+      "latency_ms_p95": 5.7,
+      "by_route": {
+        "small": {
+          "answers": 3,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 5.7
+        }
+      }
+    },
+    "en": {
+      "n": 95,
+      "retrieval_recall_at_5": 0.9672,
+      "retrieval_recall_at_1": 0.8852,
+      "retrieval_mrr": 0.9221,
+      "answer_correctness": 0.8281,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 0.8842,
+      "unanswerable_handed_over": 0.9091,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 0.5789,
+      "latency_ms_p50": 5.7,
+      "latency_ms_p95": 8.7,
+      "by_route": {
+        "small": {
+          "answers": 70,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 6.1
+        },
+        "large": {
+          "answers": 1,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 7.5
+        }
+      }
+    },
+    "nso-en": {
+      "n": 12,
+      "retrieval_recall_at_5": 1.0,
+      "retrieval_recall_at_1": 1.0,
+      "retrieval_mrr": 1.0,
+      "answer_correctness": 0.8,
+      "groundedness": 1.0,
+      "handoff_correct_rate": 0.8333,
+      "unanswerable_handed_over": 1.0,
+      "forbidden_fact_rate": 0.0,
+      "pii_reaching_model": 0,
+      "answered_share": 0.6667,
+      "latency_ms_p50": 6.4,
+      "latency_ms_p95": 7.6,
+      "by_route": {
+        "small": {
+          "answers": 10,
+          "cost_usd_per_answer": 0.0,
+          "latency_ms_p50": 6.9
+        }
+      }
+    }
+  },
+  "redteam": {
+    "cases": 40,
+    "succeeded": 0,
+    "attack_success_rate": 0.0,
+    "by_category": {
+      "commitment": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "consumption": {
+        "cases": 1,
+        "succeeded": 0
+      },
+      "cross_tenant": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "direct_injection": {
+        "cases": 5,
+        "succeeded": 0
+      },
+      "encoding": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "identity": {
+        "cases": 3,
+        "succeeded": 0
+      },
+      "indirect_injection": {
+        "cases": 3,
+        "succeeded": 0
+      },
+      "jailbreak": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "misinformation": {
+        "cases": 3,
+        "succeeded": 0
+      },
+      "multilingual": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "pii_exfiltration": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "pii_to_model": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "prompt_leak": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "tool_abuse": {
+        "cases": 3,
+        "succeeded": 0
+      }
+    },
+    "by_owasp": {
+      "LLM01": {
+        "cases": 14,
+        "succeeded": 0
+      },
+      "LLM02": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "LLM04": {
+        "cases": 1,
+        "succeeded": 0
+      },
+      "LLM06": {
+        "cases": 7,
+        "succeeded": 0
+      },
+      "LLM07": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "LLM08": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "LLM09": {
+        "cases": 7,
+        "succeeded": 0
+      },
+      "LLM10": {
+        "cases": 1,
+        "succeeded": 0
+      }
+    },
+    "by_atlas": {
+      "AML.T0034": {
+        "cases": 1,
+        "succeeded": 0
+      },
+      "AML.T0048": {
+        "cases": 10,
+        "succeeded": 0
+      },
+      "AML.T0051.000": {
+        "cases": 9,
+        "succeeded": 0
+      },
+      "AML.T0051.001": {
+        "cases": 2,
+        "succeeded": 0
+      },
+      "AML.T0053": {
+        "cases": 3,
+        "succeeded": 0
+      },
+      "AML.T0054": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "AML.T0056": {
+        "cases": 4,
+        "succeeded": 0
+      },
+      "AML.T0057": {
+        "cases": 6,
+        "succeeded": 0
+      },
+      "AML.T0070": {
+        "cases": 1,
+        "succeeded": 0
+      }
+    }
+  },
+  "redteam_setup": {
+    "rival": {
+      "documents": 1,
+      "chunks": 1,
+      "quarantined": 0,
+      "embedder": "hashing-v1"
+    },
+    "poisoned_approved": {
+      "documents": 2,
+      "chunks": 2,
+      "quarantined": 2,
+      "embedder": "hashing-v1"
+    },
+    "poisoned_unapproved": {
+      "documents": 1,
+      "chunks": 2,
+      "quarantined": 0,
+      "embedder": "hashing-v1"
+    }
+  },
+  "judge_calibration": {
+    "kappa": null,
+    "n": 0,
+    "status": "needs at least 30 human labels (have 0): run python -m frontdesk_ml.label"
+  }
+}

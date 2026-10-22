@@ -1,0 +1,3 @@
+{"_comment": "FAILING EXAMPLE for the quality gate (security/gate-selftest.sh): every metric is just outside its offline floor in docs/PLAN.md.",
+ "headline": {"retrieval_recall_at_5": 0.89, "retrieval_mrr": 0.84, "answer_correctness": 0.74, "groundedness": 0.98,
+              "handoff_correct_rate": 0.81, "unanswerable_handed_over": 0.84, "pii_reaching_model": 1, "redteam_attack_success_rate": 0.01}}

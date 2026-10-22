@@ -77,3 +77,30 @@ def two_tenants(db):
     a = create_tenant(db, "Tenant A Hardware", f"a-{uuid.uuid4().hex[:6]}")
     b = create_tenant(db, "Tenant B Motors", f"b-{uuid.uuid4().hex[:6]}")
     return a, b
+
+
+@pytest.fixture(scope="session")
+def demo_db(app_dsn):
+    """The demo tenant loaded once per test session with the offline embedder."""
+    from frontdesk import demo_tenant
+    from frontdesk.retrieval.embedders import HashingEmbedder
+
+    db = LocalDatabase(app_dsn)
+    demo_tenant.load(db, HashingEmbedder(), write=True)
+    return db
+
+
+@pytest.fixture()
+def offline_agent():
+    from frontdesk import services
+    from frontdesk.agent.state_machine import Agent
+
+    return Agent(services.build("offline"))
+
+
+def ask(db, agent, text, **turn):
+    from frontdesk.agent.state_machine import Turn
+    from frontdesk.tenancy import DEMO_TENANT_ID
+
+    with db.transaction(DEMO_TENANT_ID) as tx:
+        return agent.run(tx, Turn(text=text, **turn))

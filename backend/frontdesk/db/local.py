@@ -17,7 +17,9 @@ def to_pyformat(sql: str) -> str:
 def _adapt(params: Mapping[str, Any] | None) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for k, v in (params or {}).items():
-        if isinstance(v, (dict, list)) and not k.endswith("_array"):
+        # Lists and dicts travel as JSON, as they must over the Data API (which has no array
+        # parameters); SQL converts them, e.g. ARRAY(SELECT jsonb_array_elements_text(:x::jsonb)).
+        if isinstance(v, (dict, list)):
             out[k] = json.dumps(v)
         else:
             out[k] = v

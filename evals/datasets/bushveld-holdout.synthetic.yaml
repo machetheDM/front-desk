@@ -1,0 +1,86 @@
+# Clean holdout set for the demo tenant. SYNTHETIC.
+#
+# Written on 2026-10-22 AFTER the offline baseline's thresholds and word lists were tuned on
+# the dev split of bushveld.synthetic.yaml, and before anything was run on it. It is the
+# uncontaminated estimate reported in docs/MODEL-CARD.md. Do not tune on it; when it has been
+# looked at too often, retire it and write a new one.
+- {id: h001, split: holdout, lang: en, intent: pricing, action: answer, text: "Morning, what would the Essential 3kW cost me?",
+   gold: [{doc: price-list, heading: "Installed solar and backup packages", contains: "Essential 3kW"}], facts: ["R38 500"]}
+- {id: h002, split: holdout, lang: en, intent: pricing, action: answer, text: "whats the installed price for 16 panels and the 12kw three phase",
+   gold: [{doc: price-list, heading: "Installed solar and backup packages", contains: "Business 12kW"}], facts: ["R265 000"]}
+- {id: h003, split: holdout, lang: en, intent: pricing, action: answer, text: "I already have panels, how much would one more battery be?",
+   gold: [{doc: price-list, heading: "Add-ons", contains: "Extra 5.1kWh"}], facts: ["R21 500"]}
+- {id: h004, split: holdout, lang: en, intent: pricing, action: answer, text: "Price of the hybrid 5kW package with solar panels please",
+   gold: [{doc: price-list, heading: "Installed solar and backup packages", contains: "Home 5kW hybrid"}], facts: ["R89 500"]}
+- {id: h005, split: holdout, lang: en, intent: service_area, action: answer, text: "We stay in Groblersdal. Is there an extra charge for travel?",
+   gold: [{doc: price-list, heading: "Travel fees by zone", contains: "Groblersdal"}], facts: ["R1 900"]}
+- {id: h006, split: holdout, lang: en, intent: service_area, action: answer, text: "Seshego travel fee?",
+   gold: [{doc: price-list, heading: "Travel fees by zone", contains: "Seshego"}], facts: ["No travel fee"]}
+- {id: h007, split: holdout, lang: en, intent: service_area, action: handoff, reason: unanswerable, text: "Do you go as far as Thohoyandou?",
+   gold: [], facts: []}
+- {id: h008, split: holdout, lang: en, intent: warranty, action: answer, text: "How many years warranty on the solar panels",
+   gold: [{doc: warranty, heading: "What is covered and for how long", contains: "Solar panels"}], facts: ["12-year"]}
+- {id: h009, split: holdout, lang: en, intent: warranty, action: answer, text: "Who handles warranty claims and how quickly do you come out in Zone B?",
+   gold: [{doc: warranty, heading: "How to make a warranty claim"}], facts: ["5 working days"]}
+- {id: h010, split: holdout, lang: en, intent: warranty, action: answer, text: "Is flood damage covered by the warranty?",
+   gold: [{doc: warranty, heading: "What the warranty does not cover"}], facts: ["flooding"]}
+- {id: h011, split: holdout, lang: en, intent: warranty, action: handoff, reason: unanswerable, text: "Does the warranty transfer to the new owner if I sell my house?",
+   gold: [], facts: []}
+- {id: h012, split: holdout, lang: en, intent: installation, action: answer, text: "how many days to install a business three-phase system",
+   gold: [{doc: installation-faq, heading: "How long does an installation take?"}], facts: ["two to four days"]}
+- {id: h013, split: holdout, lang: en, intent: installation, action: answer, text: "Do you work on corrugated iron roofs?",
+   gold: [{doc: installation-faq, heading: "Which roofs can you install on?"}], facts: ["corrugated"]}
+- {id: h014, split: holdout, lang: en, intent: installation, action: answer, text: "How much does it cost to clean my 6 panels?",
+   gold: [{doc: installation-faq, heading: "Do you service systems?"}], facts: ["R45"]}
+- {id: h015, split: holdout, lang: en, intent: installation, action: answer, text: "Can I see my battery level on my phone?",
+   gold: [{doc: installation-faq, heading: "Is there a monitoring app?"}], facts: ["monitoring app"]}
+- {id: h016, split: holdout, lang: en, intent: installation, action: handoff, reason: unanswerable, text: "Can you mount the panels on the ground in my garden?",
+   gold: [], facts: []}
+- {id: h017, split: holdout, lang: en, intent: installation, action: handoff, reason: unanswerable, text: "Do you install wind turbines?",
+   gold: [], facts: []}
+- {id: h018, split: holdout, lang: en, intent: payment, action: answer, text: "Do you take EFT?",
+   gold: [{doc: payment-and-booking, heading: "How can I pay?"}], facts: ["EFT"]}
+- {id: h019, split: holdout, lang: en, intent: booking, action: answer, text: "How much deposit do I need to pay to get a date?",
+   gold: [{doc: payment-and-booking, heading: "How do I book an installation?"}], facts: ["50%"]}
+- {id: h020, split: holdout, lang: en, intent: cancellation, action: answer, text: "What's the admin fee if I cancel 2 weeks before the install?",
+   gold: [{doc: payment-and-booking, heading: "Can I cancel?"}], facts: ["R1 500"]}
+- {id: h021, split: holdout, lang: en, intent: booking, action: handoff, reason: booking_commitment, text: "Please schedule my installation for Friday morning",
+   gold: [], facts: [], forbidden: ["scheduled for Friday"]}
+- {id: h022, split: holdout, lang: en, intent: hours, action: answer, text: "What time do you close on weekdays?",
+   gold: [{doc: company-info, heading: "When are you open?"}], facts: ["17:00"]}
+- {id: h023, split: holdout, lang: en, intent: hours, action: handoff, reason: unanswerable, text: "Are you open on Heritage Day, 24 September?",
+   gold: [], facts: []}
+- {id: h024, split: holdout, lang: en, intent: discount, action: answer, text: "My mother is 67, does she qualify for any discount?",
+   gold: [{doc: price-list, heading: "Pensioner discount"}], facts: ["5%"]}
+- {id: h025, split: holdout, lang: en, intent: discount, action: handoff, reason: negotiation, text: "Can you knock off R5 000 if I take two systems?",
+   gold: [], facts: []}
+- {id: h026, split: holdout, lang: en, intent: discount, action: handoff, reason: negotiation, text: "Your competitor quoted me R50 000 for the 5kW hybrid, can you beat that?",
+   gold: [], facts: []}
+- {id: h027, split: holdout, lang: en, intent: human, action: handoff, reason: human_requested, text: "PERSON",
+   gold: [], facts: []}
+- {id: h028, split: holdout, lang: en, intent: human, action: handoff, reason: human_requested, text: "I'd rather speak to someone from sales",
+   gold: [], facts: []}
+- {id: h029, split: holdout, lang: en, intent: complaint, action: handoff, reason: complaint, text: "This is ridiculous, I've been waiting two weeks for my COC",
+   gold: [], facts: []}
+- {id: h030, split: holdout, lang: en, intent: fault, action: handoff, reason: fault, text: "my inverter keeps tripping when the geyser switches on",
+   gold: [], facts: []}
+- {id: h031, split: holdout, lang: nso-en, intent: pricing, action: answer, text: "Theko ya Family 8kW ke bokae?",
+   gold: [{doc: price-list, heading: "Installed solar and backup packages", contains: "Family 8kW"}], facts: ["R148 000"]}
+- {id: h032, split: holdout, lang: nso-en, intent: hours, action: answer, text: "Le tswalela neng mo bekeng?",
+   gold: [{doc: company-info, heading: "When are you open?"}], facts: ["17:00"]}
+- {id: h033, split: holdout, lang: nso-en, intent: service_area, action: answer, text: "Le tsenya ko Mankweng? Ke bokae travel",
+   gold: [{doc: price-list, heading: "Travel fees by zone", contains: "Mankweng"}], facts: ["R850"]}
+- {id: h034, split: holdout, lang: nso-en, intent: human, action: handoff, reason: human_requested, text: "Ke nyaka go bolela le Thabo",
+   gold: [], facts: []}
+- {id: h035, split: holdout, lang: af-en, intent: pricing, action: answer, text: "Hoeveel kos 'n ekstra paneel?",
+   gold: [{doc: price-list, heading: "Add-ons", contains: "Extra 550W"}], facts: ["R2 950"]}
+- {id: h036, split: holdout, lang: en, intent: pricing, action: handoff, reason: unanswerable, text: "How much for a 3kW system with 4 panels?",
+   gold: [], facts: []}
+- {id: h037, split: holdout, lang: en, intent: payment, action: answer, text: "If I go ahead, is the R650 assessment fee taken off the installation price?",
+   gold: [{doc: price-list, heading: "Site assessment and electrical work", contains: "Zone A"}], facts: ["credited"]}
+- {id: h038, split: holdout, lang: en, intent: general, action: answer, text: "Who do I speak to about moving my installation date?",
+   gold: [{doc: payment-and-booking, heading: "Can I change my installation date?"}], facts: ["Thabo Maluleke"]}
+- {id: h039, split: holdout, lang: en, intent: out_of_scope, action: handoff, reason: out_of_scope, text: "Can you help me with my maths homework?",
+   gold: [], facts: []}
+- {id: h040, split: holdout, lang: en, intent: pricing, action: answer, text: "Is the COC included in the package price?",
+   gold: [{doc: price-list, heading: "Installed solar and backup packages", contains: "Every package price includes"}], facts: ["Certificate of Compliance"]}

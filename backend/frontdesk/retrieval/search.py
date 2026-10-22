@@ -44,7 +44,7 @@ VECTOR_SQL = """
 SELECT c.chunk_id::text AS chunk_id, c.document_id::text AS document_id, d.title, c.heading, c.text,
        c.embedding <=> :q::vector AS distance
 FROM app.chunks c JOIN app.documents d ON d.tenant_id = c.tenant_id AND d.document_id = c.document_id
-WHERE d.approved AND c.embedder = :embedder AND c.embedding IS NOT NULL
+WHERE d.approved AND NOT c.quarantined AND c.embedder = :embedder AND c.embedding IS NOT NULL
 ORDER BY c.embedding <=> :q::vector
 LIMIT :n
 """
@@ -53,7 +53,7 @@ LEXICAL_SQL = """
 SELECT c.chunk_id::text AS chunk_id, c.document_id::text AS document_id, d.title, c.heading, c.text,
        ts_rank_cd(c.tsv, to_tsquery('english', :tsq)) AS score
 FROM app.chunks c JOIN app.documents d ON d.tenant_id = c.tenant_id AND d.document_id = c.document_id
-WHERE d.approved AND c.tsv @@ to_tsquery('english', :tsq)
+WHERE d.approved AND NOT c.quarantined AND c.tsv @@ to_tsquery('english', :tsq)
 ORDER BY score DESC
 LIMIT :n
 """

@@ -13,6 +13,6 @@ coverage/
 .env.*
 !.env.example
 tools/pricing/.cache/
-reports/tmp/
+reports/
 .DS_Store
 *.egg-info/

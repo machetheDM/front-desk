@@ -23,6 +23,15 @@ class Reranker(Protocol):
     def scores(self, query: str, docs: list[str]) -> list[float]: ...
 
 
+ANSWER_TYPES = [
+    # (question cue, what a chunk that answers it contains)
+    (re.compile(r"\b(how much|price|cost|charge|fee|bokae|theko|hoeveel|kos)\b", re.I), re.compile(r"\bR\s?\d")),
+    (re.compile(r"\b(when|what time|hours|open|close|bula|oop)\b", re.I), re.compile(r"\b\d{1,2}:\d{2}\b")),
+    (re.compile(r"\b(how long|how many (hours|days|years)|warranty|guarantee)\b", re.I),
+     re.compile(r"\b\d+(\s?(to|-)\s?\d+)?[\s-]?(years?|days?|hours?|weeks?)\b|\bone day\b|\bone to two\b", re.I)),
+]
+
+
 class LexicalReranker:
     """BM25 over the candidate set, with a bonus for exact numbers and units.
 
@@ -57,6 +66,10 @@ class LexicalReranker:
                 s += 2.0 * len(q_units & d_units)
                 if d_units and not (q_units & d_units):
                     s -= 1.5
+            # Answer-type match: a price question is answered by a chunk with a rand amount in it.
+            for cue, want in ANSWER_TYPES:
+                if cue.search(query) and want.search(docs[len(out)]):
+                    s += 1.0
             out.append(s)
         return out
 
