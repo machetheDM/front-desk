@@ -1,0 +1,180 @@
+# Every pull request and every push to main runs all gates. A red gate blocks the merge
+# (branch protection: require "ci-passed"). No AWS credentials are used in this workflow.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "22"
+
+jobs:
+  backend:
+    name: backend tests (RLS, audit, agent, redaction)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      FRONTDESK_TEST_ADMIN_DSN: postgresql://postgres:ci-only@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
+      - run: pip install -e "backend[dev]" -e "ml[dev]"
+      - name: Migration lint (a table without forced RLS fails here)
+        run: python -m frontdesk.db.lint_migrations db/migrations
+      - name: Tests
+        run: pytest -q backend/tests ml/tests --cov=frontdesk --cov=frontdesk_ml --cov-report=term-missing:skip-covered
+
+  evals:
+    name: quality gates (offline pipeline vs floors in docs/PLAN.md)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_PASSWORD: ci-only }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      FRONTDESK_TEST_ADMIN_DSN: postgresql://postgres:ci-only@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
+      - run: pip install -e "backend[dev]" -e "ml[dev]"
+      - name: Replay the demo tenant's labelled questions, then red-team, then gate
+        run: |
+          python -m frontdesk_ml.run_evals --pipeline offline --out reports/ci
+          python -m frontdesk_ml.gates --pipeline offline --metrics reports/ci/metrics.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with: { name: eval-report, path: reports/ci, retention-days: 30 }
+
+  infra:
+    name: infra (tsc, jest, synth + cdk-nag, cfn-guard)
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: infra } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: infra/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx jest
+      - name: Synthesize every stack (cdk-nag errors fail the synth)
+        run: npx cdk synth --quiet -c frontdesk:ci=true -c frontdesk:testing=true
+      - name: Install cfn-guard (pinned, checksum verified)
+        run: |
+          curl -sSL -o /tmp/guard.tgz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/3.1.2/cfn-guard-v3-x86_64-ubuntu-latest.tar.gz
+          echo "e5710bdc5a8f2c9deabadb37578caabd09ad4b3bc372420915cfe1540864c68d  /tmp/guard.tgz" | sha256sum -c -
+          tar xzf /tmp/guard.tgz -C /tmp && sudo mv /tmp/cfn-guard-v3-x86_64-ubuntu-latest/cfn-guard /usr/local/bin/
+      - name: cfn-guard rule unit tests
+        run: cfn-guard test --rules-file policies/guard/frontdesk.guard --test-data policies/guard/tests/frontdesk_tests.yaml
+      - name: cfn-guard on every synthesized template
+        run: |
+          for t in cdk.out/*.template.json; do
+            cfn-guard validate --rules policies/guard/frontdesk.guard --data "$t" --show-summary fail || exit 1
+          done
+
+  inbox:
+    name: staff inbox (typecheck, test, static build)
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: apps/inbox } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: apps/inbox/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  security:
+    name: security scans (gitleaks, semgrep, trivy, SBOM)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0 } # gitleaks scans the whole history, not just the diff
+      - name: gitleaks (pinned binary, checksum verified)
+        run: |
+          curl -sSL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
+          echo "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 .
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: semgrep (our rules + community Python/TypeScript/secrets rules)
+        run: |
+          pip install semgrep==1.182.1
+          semgrep scan --error --metrics=off --exclude security/gate-fixtures \
+            --config security/semgrep --config p/python --config p/typescript --config p/secrets --config p/github-actions
+      - name: trivy (dependencies and IaC misconfiguration)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          skip-dirs: security/gate-fixtures,infra/cdk.out
+          exit-code: "1"
+      - name: SBOM (CycloneDX) for the whole repository
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: false
+      - name: SBOM must be non-trivial, then scan it
+        run: |
+          python3 -c "import json;c=json.load(open('sbom.cdx.json'))['components'];n=[x['name'] for x in c];assert len(c)>50,len(c);assert 'pydantic' in n and 'aws-cdk-lib' in n;print(len(c),'components')"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with: { scan-type: sbom, scan-ref: sbom.cdx.json, severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with: { name: sbom, path: sbom.cdx.json, retention-days: 90 }
+
+  gate-selftest:
+    name: every gate fails its kept bad example
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
+      - name: Install scanners (pinned)
+        run: |
+          pip install semgrep==1.182.1 -e backend -e ml
+          curl -sSL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
+          echo "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar xzf /tmp/gitleaks.tgz -C /tmp gitleaks && sudo mv /tmp/gitleaks /usr/local/bin/
+          curl -sSL -o /tmp/guard.tgz https://github.com/aws-cloudformation/cloudformation-guard/releases/download/3.1.2/cfn-guard-v3-x86_64-ubuntu-latest.tar.gz
+          echo "e5710bdc5a8f2c9deabadb37578caabd09ad4b3bc372420915cfe1540864c68d  /tmp/guard.tgz" | sha256sum -c -
+          tar xzf /tmp/guard.tgz -C /tmp && sudo mv /tmp/cfn-guard-v3-x86_64-ubuntu-latest/cfn-guard /usr/local/bin/
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with: { version: v0.76.1 }
+      - run: bash security/gate-selftest.sh
+
+  ci-passed:
+    name: ci-passed
+    if: always()
+    needs: [backend, evals, infra, inbox, security, gate-selftest]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: All gates green
+        run: |
+          echo '${{ toJSON(needs) }}' | python3 -c "import json,sys; n=json.load(sys.stdin); bad=[k for k,v in n.items() if v['result']!='success']; print('failed:',bad); sys.exit(1 if bad else 0)"

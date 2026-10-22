@@ -1,0 +1,106 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockControlPlaneOnlyInFrankfurt",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:Create*",
+        "bedrock:Update*",
+        "bedrock:Delete*",
+        "bedrock:Put*",
+        "bedrock:Apply*",
+        "bedrock:Rerank",
+        "bedrock:Retrieve*",
+        "bedrock:InvokeAgent",
+        "bedrock:InvokeFlow"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "ModelInvocationOnlyInEuRegions",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": [
+            "eu-central-1",
+            "eu-north-1",
+            "eu-south-1",
+            "eu-south-2",
+            "eu-west-1",
+            "eu-west-3"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "NoGlobalInferenceProfiles",
+      "Effect": "Deny",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*:*:inference-profile/global.*",
+        "arn:aws:bedrock:*:*:inference-profile/us.*",
+        "arn:aws:bedrock:*:*:inference-profile/apac.*"
+      ]
+    },
+    {
+      "Sid": "NoCustomerDataServicesInFrankfurt",
+      "Effect": "Deny",
+      "Action": [
+        "rds:*",
+        "rds-data:*",
+        "dynamodb:*",
+        "lambda:*",
+        "states:*",
+        "apigateway:*",
+        "social-messaging:*",
+        "cognito-idp:*",
+        "sqs:*",
+        "sns:*",
+        "kinesis:*",
+        "firehose:*",
+        "glue:*",
+        "athena:*",
+        "es:*",
+        "elasticfilesystem:*",
+        "ec2:RunInstances",
+        "secretsmanager:*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        },
+        "ArnNotLike": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::*:role/cdk-hnb659fds-cfn-exec-role-*-eu-central-1"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "NoObjectsInFrankfurtExceptCdkAssets",
+      "Effect": "Deny",
+      "Action": "s3:PutObject",
+      "NotResource": "arn:aws:s3:::cdk-hnb659fds-assets-*-eu-central-1/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    }
+  ]
+}

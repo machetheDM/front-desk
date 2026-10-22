@@ -1,0 +1,41 @@
+# Sepedi (Northern Sotho) and township-English terms customers mix into English questions,
+# mapped to the English words the company's documents use. Applied to the query only, before
+# retrieval, so "Theko ya 5kW ke bokae?" also searches "price 5kW how much".
+#
+# STATUS: drafted from common usage; must be reviewed by a first-language Sepedi speaker
+# before a client sees results. Wrong entries hurt recall silently, so each change should be
+# followed by a replay run (recall@5 is reported per language tag in the eval report).
+phrases:
+  "ke bokae": "how much price cost"
+  "ke kopa": "please request"
+  "le bula neng": "opening hours when open"
+  "le tswalela neng": "closing hours when close"
+  "le kae": "where location address"
+  "go tsenya": "install installation"
+  "load shedding": "load-shedding power outage"
+  "loadshedding": "load-shedding power outage"
+  "lights off": "power outage load-shedding"
+words:
+  theko: "price cost"
+  tefo: "payment pay"
+  lefa: "pay payment"
+  tsenya: "install installation"
+  mohlagase: "electricity power"
+  neng: "when"
+  kae: "where"
+  bjang: "how"
+  sontaga: "sunday"
+  mokibelo: "saturday"
+  betri: "battery"
+  dibetri: "batteries battery"
+  phanele: "panel solar"
+  diphanele: "panels solar"
+  tiisetso: "warranty guarantee"
+  thuso: "help support"
+  dumela: ""
+  dumelang: ""
+  sharp: ""
+  eish: ""
+  howzit: ""
+  geyser: "geyser water heater"
+  ngwana: ""

@@ -1,0 +1,53 @@
+# Front Desk policy-as-code. Runs on every synthesized template in CI (scripts/run-guard.sh).
+# cdk-nag checks constructs while CDK builds them; these rules check the CloudFormation that
+# actually deploys, so a raw L1 resource or an escape hatch cannot slip past.
+
+let buckets      = Resources.*[ Type == 'AWS::S3::Bucket' ]
+let db_clusters  = Resources.*[ Type == 'AWS::RDS::DBCluster' ]
+let db_instances = Resources.*[ Type == 'AWS::RDS::DBInstance' ]
+let users        = Resources.*[ Type == 'AWS::IAM::User' ]
+let keys         = Resources.*[ Type == 'AWS::IAM::AccessKey' ]
+let app_lambdas  = Resources.*[ Type == 'AWS::Lambda::Function'
+                                Properties.Handler == /^frontdesk\./ ]
+let machines     = Resources.*[ Type == 'AWS::StepFunctions::StateMachine' ]
+let log_groups   = Resources.*[ Type == 'AWS::Logs::LogGroup' ]
+
+rule FD_NO_IAM_USERS {
+  # No long-lived credentials (AGENTS.md). Humans use Identity Center, CI uses OIDC.
+  %users empty
+  %keys empty
+}
+
+rule FD_S3_PRIVATE_AND_ENCRYPTED when %buckets !empty {
+  %buckets.Properties.PublicAccessBlockConfiguration {
+    BlockPublicAcls == true
+    BlockPublicPolicy == true
+    IgnorePublicAcls == true
+    RestrictPublicBuckets == true
+  }
+  %buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm IN ['aws:kms', 'AES256']
+}
+
+rule FD_DATABASE_PRIVATE_AND_ENCRYPTED when %db_clusters !empty {
+  %db_clusters.Properties.StorageEncrypted == true
+  # The RDS Data API is the only way in (ADR 0004).
+  %db_clusters.Properties.EnableHttpEndpoint == true
+}
+
+rule FD_DB_INSTANCES_NOT_PUBLIC when %db_instances !empty {
+  %db_instances.Properties.PubliclyAccessible == false
+}
+
+rule FD_APP_LAMBDAS_SIGNED_AND_TRACED when %app_lambdas !empty {
+  %app_lambdas.Properties.CodeSigningConfigArn exists
+  %app_lambdas.Properties.TracingConfig.Mode == 'Active'
+  %app_lambdas.Properties.Architectures[*] == 'arm64'
+}
+
+rule FD_STATE_MACHINES_DO_NOT_LOG_CUSTOMER_TEXT when %machines !empty {
+  %machines.Properties.LoggingConfiguration.IncludeExecutionData == false
+}
+
+rule FD_LOG_GROUPS_HAVE_RETENTION when %log_groups !empty {
+  %log_groups.Properties.RetentionInDays exists
+}

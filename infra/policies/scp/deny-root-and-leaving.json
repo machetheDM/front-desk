@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "NoMemberAccountRoot",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": { "ArnLike": { "aws:PrincipalArn": ["arn:aws:iam::*:root"] } }
+    },
+    {
+      "Sid": "NoLeavingOrChangingRegions",
+      "Effect": "Deny",
+      "Action": ["organizations:LeaveOrganization", "account:EnableRegion", "account:DisableRegion"],
+      "Resource": "*"
+    }
+  ]
+}

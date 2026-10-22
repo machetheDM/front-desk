@@ -1,0 +1,91 @@
+# Unit tests for frontdesk.guard: every rule has a failing example and a passing one.
+# Run:  cfn-guard test --rules-file frontdesk.guard --test-data tests/frontdesk_tests.yaml
+- name: an IAM user fails
+  input:
+    Resources:
+      U: { Type: AWS::IAM::User, Properties: {} }
+  expectations:
+    rules:
+      FD_NO_IAM_USERS: FAIL
+- name: an access key fails
+  input:
+    Resources:
+      K: { Type: AWS::IAM::AccessKey, Properties: { UserName: x } }
+  expectations:
+    rules:
+      FD_NO_IAM_USERS: FAIL
+- name: a public bucket fails
+  input:
+    Resources:
+      B:
+        Type: AWS::S3::Bucket
+        Properties:
+          PublicAccessBlockConfiguration: { BlockPublicAcls: false, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+          BucketEncryption: { ServerSideEncryptionConfiguration: [ { ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 } } ] }
+  expectations:
+    rules:
+      FD_S3_PRIVATE_AND_ENCRYPTED: FAIL
+- name: an unencrypted bucket fails
+  input:
+    Resources:
+      B:
+        Type: AWS::S3::Bucket
+        Properties:
+          PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+  expectations:
+    rules:
+      FD_S3_PRIVATE_AND_ENCRYPTED: FAIL
+- name: a private encrypted bucket passes
+  input:
+    Resources:
+      B:
+        Type: AWS::S3::Bucket
+        Properties:
+          PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+          BucketEncryption: { ServerSideEncryptionConfiguration: [ { ServerSideEncryptionByDefault: { SSEAlgorithm: aws:kms } } ] }
+  expectations:
+    rules:
+      FD_S3_PRIVATE_AND_ENCRYPTED: PASS
+      FD_NO_IAM_USERS: PASS
+- name: a database without the Data API fails
+  input:
+    Resources:
+      C: { Type: AWS::RDS::DBCluster, Properties: { StorageEncrypted: true, EnableHttpEndpoint: false } }
+  expectations:
+    rules:
+      FD_DATABASE_PRIVATE_AND_ENCRYPTED: FAIL
+- name: a public database instance fails
+  input:
+    Resources:
+      I: { Type: AWS::RDS::DBInstance, Properties: { PubliclyAccessible: true } }
+  expectations:
+    rules:
+      FD_DB_INSTANCES_NOT_PUBLIC: FAIL
+- name: an unsigned app Lambda fails
+  input:
+    Resources:
+      F: { Type: AWS::Lambda::Function, Properties: { Handler: frontdesk.handlers.pipeline.answer, TracingConfig: { Mode: Active }, Architectures: [arm64] } }
+  expectations:
+    rules:
+      FD_APP_LAMBDAS_SIGNED_AND_TRACED: FAIL
+- name: a signed traced ARM app Lambda passes
+  input:
+    Resources:
+      F: { Type: AWS::Lambda::Function, Properties: { Handler: frontdesk.handlers.pipeline.answer, CodeSigningConfigArn: arn, TracingConfig: { Mode: Active }, Architectures: [arm64] } }
+  expectations:
+    rules:
+      FD_APP_LAMBDAS_SIGNED_AND_TRACED: PASS
+- name: a state machine that logs execution data fails
+  input:
+    Resources:
+      S: { Type: AWS::StepFunctions::StateMachine, Properties: { LoggingConfiguration: { IncludeExecutionData: true, Level: ALL } } }
+  expectations:
+    rules:
+      FD_STATE_MACHINES_DO_NOT_LOG_CUSTOMER_TEXT: FAIL
+- name: a log group kept forever fails
+  input:
+    Resources:
+      L: { Type: AWS::Logs::LogGroup, Properties: {} }
+  expectations:
+    rules:
+      FD_LOG_GROUPS_HAVE_RETENTION: FAIL

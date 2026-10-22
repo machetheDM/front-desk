@@ -1,0 +1,65 @@
+rules:
+  - id: frontdesk-sql-built-from-strings
+    message: >-
+      SQL built with an f-string or concatenation. Use :name parameters. RLS limits the damage
+      of an injection to one tenant, but an injection is still a breach of that tenant.
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["backend/frontdesk/", "security/gate-fixtures/semgrep/"]
+    pattern-either:
+      - pattern: $TX.execute(f"...", ...)
+      - pattern: $TX.execute("..." + $X, ...)
+      - pattern: $TX.execute("..." % $X, ...)
+      - pattern: $TX.execute("...".format(...), ...)
+
+  - id: frontdesk-global-inference-profile
+    message: >-
+      Global inference profiles may process customer text in any Region worldwide (ADR 0002).
+      Use the eu. geo profile or an in-Region model id in eu-central-1.
+    severity: ERROR
+    languages: [python, typescript, javascript]
+    pattern-regex: '["''](global|us|apac)\.anthropic\.'
+
+  - id: frontdesk-bedrock-outside-frankfurt
+    message: Bedrock clients must be created in eu-central-1 (ADR 0002).
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: boto3.client("bedrock-runtime", region_name="$R", ...)
+          - pattern: boto3.client("bedrock-agent-runtime", region_name="$R", ...)
+          - pattern: boto3.client("bedrock", region_name="$R", ...)
+      - metavariable-regex:
+          metavariable: $R
+          regex: ^(?!eu-central-1$).*
+
+  - id: frontdesk-message-text-in-logs
+    message: >-
+      Customer message text must never be logged (POPIA; logs are kept 14 days and are not
+      covered by deletion requests). Log ids and lengths instead.
+    severity: ERROR
+    languages: [python]
+    paths:
+      include: ["backend/frontdesk/", "security/gate-fixtures/semgrep/"]
+    pattern-either:
+      - pattern: $LOG.$M(..., body=$B, ...)
+      - pattern: $LOG.$M(..., text=$B, ...)
+      - pattern: print(..., $MSG.body, ...)
+      - pattern: $LOG.$M(f"...{$MSG.body}...", ...)
+
+  - id: frontdesk-tls-verification-disabled
+    message: TLS verification must never be disabled.
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: requests.$M(..., verify=False, ...)
+      - pattern: ssl._create_unverified_context(...)
+
+  - id: frontdesk-unsafe-yaml
+    message: yaml.load without SafeLoader executes arbitrary tags; use yaml.safe_load.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: yaml.load(...)
+      - pattern-not: yaml.load(..., Loader=yaml.SafeLoader)

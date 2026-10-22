@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "NoTamperingWithTrailsAnalyzersOrAuditLogs",
+      "Effect": "Deny",
+      "Action": [
+        "cloudtrail:StopLogging", "cloudtrail:DeleteTrail", "cloudtrail:UpdateTrail",
+        "cloudtrail:PutEventSelectors", "access-analyzer:DeleteAnalyzer",
+        "guardduty:DeleteDetector", "guardduty:DisassociateFromMasterAccount",
+        "config:StopConfigurationRecorder", "config:DeleteConfigurationRecorder",
+        "ec2:DeleteFlowLogs", "events:DisableRule", "events:DeleteRule"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ArnNotLike": { "aws:PrincipalArn": [
+          "arn:aws:iam::*:role/FrontDeskBreakGlass",
+          "arn:aws:iam::*:role/cdk-hnb659fds-cfn-exec-role-*"
+        ] }
+      }
+    },
+    {
+      "Sid": "NoDeletingAuditLogGroups",
+      "Effect": "Deny",
+      "Action": ["logs:DeleteLogGroup", "logs:DeleteLogStream", "logs:PutRetentionPolicy", "logs:DeleteRetentionPolicy"],
+      "Resource": "arn:aws:logs:*:*:log-group:/frontdesk/audit/*",
+      "Condition": { "ArnNotLike": { "aws:PrincipalArn": ["arn:aws:iam::*:role/FrontDeskBreakGlass"] } }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# gitleaks configuration: the default ruleset plus Front Desk's own token formats.
+title = "front-desk"
+
+[extend]
+useDefault = true
+
+# Widget keys and webhook secrets we mint look like fdk_live_<32 chars>. If one is ever
+# committed, the build fails.
+[[rules]]
+id = "frontdesk-widget-or-webhook-secret"
+description = "Front Desk widget key or webhook signing secret"
+regex = '''fdk_(?:live|test)_[A-Za-z0-9]{32}'''
+keywords = ["fdk_live_", "fdk_test_"]
+
+# A South African ID number next to the word "id" in a committed file is almost certainly
+# real customer data in a fixture or log paste.
+[[rules]]
+id = "south-african-id-number"
+description = "South African ID number"
+regex = '''(?i)\b(?:id(?:\s*(?:no|number))?|identity)\s*[:=#]?\s*\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{4}[01]\d{2}\b'''
+keywords = ["id", "identity"]
+
+[allowlist]
+description = "Kept failing examples for the gate self-test, and synthetic redaction tests"
+paths = [
+  '''security/gate-fixtures/''',
+  '''backend/tests/test_redaction\.py''',
+  '''evals/datasets/.*\.synthetic\.''',
+]
