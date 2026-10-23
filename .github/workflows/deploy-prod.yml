@@ -1,6 +1,9 @@
 # Prod is deployed by hand-started workflow only, waits for the owner's approval on the `prod`
 # environment, and ships only code signed by AWS Signer (prod's CodeSigningConfig enforces it).
 name: deploy-prod
+# The released ref goes into the run name so DORA lead time (tools/dora) measures from the
+# commits actually shipped, not from whatever main was when the button was pressed.
+run-name: "deploy-prod ${{ inputs.ref }}"
 
 on:
   workflow_dispatch:

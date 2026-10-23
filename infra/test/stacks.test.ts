@@ -178,6 +178,29 @@ describe('organization', () => {
   });
 });
 
+describe('operations dashboard', () => {
+  test('one dashboard shows latency, cost, degraded mode, attacks and drift from the alarmed metrics', () => {
+    const dashboards = tpl('FrontDesk-dev-App').findResources('AWS::CloudWatch::Dashboard');
+    const body = JSON.stringify(Object.values(dashboards).map((d: any) => d.Properties.DashboardBody));
+    for (const metric of ['AnswerLatencyMs', 'ModelCostUsd', 'Degraded', 'AssistantPaused', 'GuardrailIntervened', 'RateLimited', 'IntentMixPsiMax']) {
+      expect({ metric, shown: body.includes(metric) }).toEqual({ metric, shown: true });
+    }
+    expect(Object.keys(dashboards)).toHaveLength(1); // three dashboards are free; keep well under
+  });
+});
+
+describe('drift', () => {
+  test('a weekly job scores the intent mix and DET-12 alarms on the worst tenant\'s PSI', () => {
+    const app = tpl('FrontDesk-dev-App');
+    app.hasResourceProperties('AWS::Lambda::Function', { Handler: 'frontdesk.handlers.ops.drift' });
+    app.hasResourceProperties('AWS::Events::Rule', { ScheduleExpression: 'cron(0 5 ? * MON *)' });
+    tpl('FrontDesk-dev-Detection').hasResourceProperties('AWS::CloudWatch::Alarm', {
+      MetricName: 'IntentMixPsiMax', Statistic: 'Maximum', Period: 86400, Threshold: 0.25,
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+    });
+  });
+});
+
 describe('detections', () => {
   test('every detection has a runbook section in docs/DETECTIONS.md', () => {
     const doc = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'DETECTIONS.md'), 'utf8');

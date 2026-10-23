@@ -16,6 +16,16 @@ REASON_LABEL = {
 }
 
 
+def _count_gaps(gaps: list[str]) -> list[tuple[str, int]]:
+    """The same question asked three ways is one gap, not three: group on a normalised form,
+    show the first wording seen, most frequent first."""
+    seen: dict[str, list] = {}
+    for g in gaps:
+        key = " ".join("".join(ch for ch in g.lower() if ch.isalnum() or ch.isspace()).split())
+        seen.setdefault(key, [g, 0])[1] += 1
+    return sorted(((q, c) for q, c in seen.values()), key=lambda qc: -qc[1])
+
+
 def owner_report(rows, *, tenant_name: str, pipeline: str) -> str:
     n = len(rows)
     answered = [r for r in rows if r.outcome.action == "answer"]
@@ -60,11 +70,13 @@ def owner_report(rows, *, tenant_name: str, pipeline: str) -> str:
         "|---|---|",
         *[f"| {k} | {v} |" for k, v in intents.most_common()],
         "",
-        "## Questions your documents do not answer",
+        "## Questions the assistant could not answer from your documents",
         "",
-        "These are the cheapest wins: one new FAQ entry each.",
+        "These are the cheapest wins. Some are missing from your documents (one new FAQ entry each);",
+        "others are there but worded differently from how customers ask, which a synonym or a",
+        "reworded heading fixes. Most frequent first.",
         "",
-        *[f"- {g}" for g in gaps[:15]],
+        *[f"- {q}" + (f" ({c} times)" if c > 1 else "") for q, c in _count_gaps(gaps)[:15]],
         "",
         "## Sample answers (with the document each one quoted)",
         "",

@@ -151,6 +151,8 @@ def persist(tx: Transaction, rec: Received, o: Outcome) -> str:
             "latency_ms": round(o.latency_ms, 1), "route": o.route, "model": o.model_id, "prompt": o.prompt_version}
     if o.shadow:
         base["shadow"] = o.shadow
+    if o.experiment:
+        base["experiment"] = o.experiment
     if o.tool_calls:
         # Name and outcome only: arguments and results can carry customer details, and the
         # event stream must stay free of them (test_audit.py).
@@ -171,7 +173,8 @@ def persist(tx: Transaction, rec: Received, o: Outcome) -> str:
                     {**base, "reason": o.handoff_reason, "staff_id": staff["staff_id"] if staff else None,
                      "requests": [r["kind"] for r in o.requests]})
         if o.action == "degraded":
-            telemetry.metric("Degraded")
+            # A pause is a decision, not a failure: it must not page anyone as DET-06 or roll back a deploy.
+            telemetry.metric("AssistantPaused" if o.handoff_reason == "operator_paused" else "Degraded")
     elif o.action == "refused":
         events.emit(tx, rec.conversation_id, "refused", {**base, "reason": o.handoff_reason})
     elif o.action == "opted_out":

@@ -38,6 +38,7 @@ class DraftRequest:
     assistant_name: str = ""
     language_hint: str = "en"
     known_entities: list[str] = field(default_factory=list)  # place names etc. from tenant config
+    prompt_version: str = ""  # empty means prompts.CURRENT; set per customer by experiments.choose
 
 
 @dataclass

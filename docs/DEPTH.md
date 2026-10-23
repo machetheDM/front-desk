@@ -4,13 +4,13 @@ An item is **done** only when its evidence exists and the link below opens it. *
 the code is written and tested against fakes, and the remaining step needs an AWS account, a
 real client or a paid service; the seam is named. **Open** means not yet built.
 
-Last updated: Phase 4 complete, 23 October 2026.
+Last updated: Phase 5 complete, 23 October 2026.
 
 ## AI / ML engineering
 
 | Item | Status | Evidence |
 |---|---|---|
-| Hybrid retrieval (pgvector + Postgres FTS, reciprocal rank fusion) | done | `backend/frontdesk/retrieval/search.py`; recall@5 0.96 test / 0.88 holdout in `docs/evidence/eval-offline-2026-10-22.md` |
+| Hybrid retrieval (pgvector + Postgres FTS, reciprocal rank fusion) | done | `backend/frontdesk/retrieval/search.py`; recall@5 0.98 test / 0.88 holdout in `docs/evidence/eval-offline-2026-10-23.md` |
 | Reranker | done (offline), seam (Cohere Rerank 3.5) | `retrieval/rerankers.py`; `test_bedrock_client.py::test_rerank_uses_the_frankfurt_cohere_model...` |
 | Query rewriting for Sepedi-English code-switching | done (glossary; native-speaker review open) | `data/glossary.yaml`, per-language rows in the eval report |
 | Agent as explicit state machine with typed, tenant-scoped tools | done | `agent/state_machine.py`, `agent/tools.py`, `test_agent_state_machine.py`, `test_agent_tools.py` |
@@ -48,26 +48,37 @@ Last updated: Phase 4 complete, 23 October 2026.
 | Tool calls recorded in events (name and outcome, no arguments) | done | `pipeline.persist`, `test_pipeline.py::test_every_tool_call_is_recorded_in_the_event_without_its_arguments` |
 | Improper output handling cases (LLM05) in the red-team suite | done | rt41, rt42 in `evals/redteam/cases.yaml` |
 
+## Phase 5 additions
+
+| Item | Status | Evidence |
+|---|---|---|
+| Restore check: protections survive a restore, not just rows | done | `backend/frontdesk/restore_check.py`, `test_restore.py` |
+| Per-tenant kill switch (pause the assistant), audited | done | `backend/frontdesk/controls.py`, `test_controls.py` |
+| Immediate staff cut-off and "what did this account read" | done | `backend/frontdesk/staff.py`, `audit.reads_by`, `test_incident_tools.py` |
+| Operations dashboard | done | `app-stack.ts` `Operations`, `stacks.test.ts` "operations dashboard" |
+| Every PowerShell script and documented block parsed in CI | done | `scripts/ci/check-powershell.ps1`, CI `security` job |
+| Breach notice template (POPIA s21 to the client, s22(5) contents) | done | `docs/engagement/breach-notice-template.md` |
+
 ## Machine learning beyond the LLM
 
 | Item | Status | Evidence |
 |---|---|---|
 | Trained handoff/intent classifier compared with rules and LLM | done (rules vs model, with leakage test); LLM arm is a seam (`compare --llm` needs Bedrock) | `docs/evidence/classifier-comparison.md`, `ml/frontdesk_ml/classifier.py`, `ml/tests/test_classifier_training.py`, MODEL-CARD section 6 |
 | Served from Lambda | done, in shadow mode (logs, never decides) | `agent/classifier.py` (numpy only), `agent/state_machine.py::_shadow`, `backend/tests/test_classifier.py` |
-| Weekly drift on intent mix | Phase 5 | |
+| Weekly drift on intent mix | done: PSI plus a chi-square test, false-alarm rate measured; weekly Lambda and DET-12 | `backend/frontdesk/drift.py`, `handlers/ops.drift`, `test_drift.py`, `docs/evidence/insights-demo.md` section 4 |
 | Model card | done; Bedrock results are a seam | `docs/MODEL-CARD.md` |
 
 ## Data science
 
 | Item | Status | Evidence |
 |---|---|---|
-| Intent clustering (UMAP + HDBSCAN) | Phase 5 | |
+| Intent clustering (UMAP + HDBSCAN) | done, scored against labelled intents and two baselines; Cohere embeddings are SEAM(bedrock-embeddings-clustering) | `ml/frontdesk_ml/clustering.py`, `ml/tests/test_analyses.py`, insights-demo section 2 |
 | Rates with confidence intervals | done | `backend/frontdesk/stats.py` (Wilson), owner report |
-| A/B tests of prompt versions | Phase 5 | |
-| Hour-of-week volume forecast | Phase 5 | |
+| A/B tests of prompt versions | done: sticky assignment, pre-registration with stored hash, power analysis, peeking simulation; live run is SEAM(ab-live-traffic) | `backend/frontdesk/experiments.py`, `experiments/`, `ml/frontdesk_ml/ab.py`, `test_experiments.py`, `test_ab.py` |
+| Hour-of-week volume forecast | done: three methods, rolling-origin backtest, MASE 0.86, interval coverage | `ml/frontdesk_ml/forecast.py`, insights-demo section 3 |
 | LLM-as-judge calibrated against humans (Cohen's kappa) | seam: tool and kappa done, needs 30 human labels | `ml/frontdesk_ml/judge.py`, `label.py`, `test_gates_and_metrics.py::test_cohens_kappa...` |
-| Notebooks/analyses that run in CI on demo data | Phase 5 | |
-| Iceberg analytics tables queried with Athena | infra done, seam: export Lambda Phase 5 | `infra/lib/workload/app-stack.ts` (Glue Iceberg table, Athena workgroup) |
+| Notebooks/analyses that run in CI on demo data | done (scripted analyses, no notebooks to rot) | `ml/frontdesk_ml/analyses.py`, CI `evals` job step, `docs/evidence/insights-demo.md` |
+| Iceberg analytics tables queried with Athena | done in code (nightly export Lambda, no text exported); the first Athena query is a seam (dev account) | `app-stack.ts` (Glue Iceberg table, Athena workgroup), `handlers/ops.export_events`, `test_restore.py::test_the_analytics_export_carries_ids_and_decisions_but_no_text` |
 
 ## Cloud security
 
@@ -93,7 +104,7 @@ Last updated: Phase 4 complete, 23 October 2026.
 | Detection rules with runbooks, firing in tests | done | `docs/DETECTIONS.md`; `infra/test/detections.test.ts` |
 | OWASP ASVS L2 checklist mapped to code | done | `docs/ASVS.md` |
 | DAST (OWASP ZAP) against dev | workflow done, seam (needs the dev site) | `.github/workflows/zap.yml` |
-| Recorded incident drill | done: model-down drill, runs on every PR; AWS run is a seam (SEAM(drill-model-down-aws)); security tabletop Phase 5 | `docs/drills/2026-10-23-model-down.md`, `docs/drills/2026-10-23-model-down.run.md`, `backend/tests/test_drills.py` |
+| Recorded incident drill | done: model-down drill and backup/restore drill run on every PR; stolen-session tabletop; AWS runs are SEAM(drill-model-down-aws) and SEAM(restore-drill-aws) | `docs/drills/`, `test_drills.py`, `test_restore.py`, `scripts/restore-drill.ps1` |
 
 ## DevSecOps
 
@@ -106,7 +117,7 @@ Last updated: Phase 4 complete, 23 October 2026.
 | Lambda code signing (AWS Signer), prod refuses unsigned | done in code | `app-stack.ts`; `stacks.test.ts::prod refuses unsigned Lambda code` |
 | Canary deploys with automatic rollback | done in code, seam (demonstration needs dev) | `app-stack.ts` CodeDeploy group; `stacks.test.ts::released by canary` |
 | Evals and red-team as build gates | done | CI `evals` job; `ml/frontdesk_ml/gates.py` |
-| DORA metrics | Phase 5 | |
+| DORA metrics | done: weekly workflow; values appear once deploys exist | `tools/dora/dora.py`, `.github/workflows/dora.yml`, `test_dora.py` |
 
 ## Data and AI security
 
@@ -127,5 +138,5 @@ Last updated: Phase 4 complete, 23 October 2026.
 | ADRs for real decisions | done (8) | `docs/adr/` |
 | Replay owner report | done | `docs/evidence/replay-demo-offline/owner-report.md` |
 | Discovery workshop, pilot charter, ROI sheet, handover pack, case study | Phase 6 | |
-| Well-Architected review | Phase 5 | |
+| Well-Architected review | done: six pillars and the Generative AI Lens, no open HRI | `docs/WELL-ARCHITECTED.md` |
 | One real integration behind an adapter | adapter done, seam (needs a client) | `integrations/orders.py` (`HttpOrdersAdapter`, SEAM(client-order-api)) |

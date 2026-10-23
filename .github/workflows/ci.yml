@@ -32,11 +32,14 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       FRONTDESK_TEST_ADMIN_DSN: postgresql://postgres:ci-only@localhost:5432/postgres
+      FRONTDESK_REQUIRE_PG_TOOLS: "1"   # the backup/restore drill must run here, never skip
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
       - run: pip install -r requirements/dev/requirements.txt -e "backend[dev]" -e "ml[dev]"
+      - name: PostgreSQL client tools for the backup/restore drill
+        run: pg_dump --version && pg_restore --version
       - name: Migration lint (a table without forced RLS fails here)
         run: python -m frontdesk.db.lint_migrations db/migrations
       - name: Tests
@@ -65,6 +68,10 @@ jobs:
         run: |
           python -m frontdesk_ml.run_evals --pipeline offline --out reports/ci
           python -m frontdesk_ml.gates --pipeline offline --metrics reports/ci/metrics.json
+      - name: Owner analyses on demo data (topics, forecast, drift, A/B planning)
+        run: |
+          python -m frontdesk_ml.analyses --out reports/ci/analyses
+          cp docs/evidence/insights-demo.md reports/ci/analyses/
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with: { name: eval-report, path: reports/ci, retention-days: 30 }
@@ -114,6 +121,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0 } # gitleaks scans the whole history, not just the diff
+      - name: Every PowerShell script and documented PowerShell block parses (nothing is run)
+        shell: pwsh
+        run: ./scripts/ci/check-powershell.ps1
       - name: gitleaks (pinned binary, checksum verified)
         run: |
           curl -sSL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz

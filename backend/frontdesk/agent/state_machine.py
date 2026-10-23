@@ -24,6 +24,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from .. import controls, experiments
 from ..db import Transaction
 from ..integrations.orders import ORDER_REF, OrdersAdapter
 from ..llm import router
@@ -125,6 +126,7 @@ class Outcome:
     prompt_version: str = ""
     requests: list[dict] = field(default_factory=list)
     shadow: dict | None = None
+    experiment: dict | None = None
 
     @property
     def answered(self) -> bool:
@@ -154,6 +156,9 @@ class _Ctx:
     guardrail_hit: bool = False
     tool_ctx: tools.ToolContext | None = None
     shadow: dict | None = None
+    prompt: str = PROMPT_VERSION
+    experiment: dict | None = None
+    paused: bool = False
 
 
 class Agent:
@@ -167,6 +172,8 @@ class Agent:
         ctx = _Ctx(tx, turn, self.deps, tenant)
         orders = self.deps.orders if self.deps.orders is not None else (self.deps.orders_factory(tx) if self.deps.orders_factory else None)
         ctx.tool_ctx = tools.ToolContext(tx, turn.channel_address, orders)
+        ctx.prompt, ctx.experiment = experiments.choose(tx, turn.channel_address)
+        ctx.paused = controls.paused(tx) is not None
         state, trace = S.RECEIVED, [S.RECEIVED.value]
         while state not in TERMINAL:
             try:
@@ -191,6 +198,9 @@ class Agent:
             return S.OPTED_OUT
         if policy.is_marketing_opt_in(text):
             return S.OPTED_IN
+        if ctx.paused:  # the operator's incident switch; consent changes above still work
+            ctx.reason = "operator_paused"
+            return S.DEGRADED
         decision = policy.evaluate(text)
         ctx.rule = decision.rule
         ctx.intent = policy.keyword_intent(text)
@@ -260,7 +270,7 @@ class Agent:
         req = DraftRequest(
             question=ctx.red.text, sources=ctx.hits, tool_results=ctx.tool_results, history=ctx.turn.history,
             customer_name=ctx.turn.customer_name, tenant_name=ctx.tenant["name"], assistant_name=ctx.tenant["assistant_name"],
-            known_entities=_known_places(ctx),
+            known_entities=_known_places(ctx), prompt_version=ctx.prompt,
         )
         res = ctx.deps.model.draft(req, large=ctx.route.tier == "large",
                                    run_tool=lambda n, a: _record_tool(ctx, tools.call(ctx.tool_ctx, n, a)))
@@ -299,8 +309,8 @@ class Agent:
                     usage=ctx.usage, model_inputs=ctx.model_inputs, retrieved=ctx.hits, tool_calls=ctx.tool_results,
                     validation_problems=ctx.problems, guardrail_intervened=ctx.guardrail_hit, model_id=ctx.model_id,
                     route=ctx.route.tier if ctx.route else "rules", route_reason=ctx.route.reason if ctx.route else (ctx.rule or ""),
-                    prompt_version=f"{PROMPT_VERSION}@{load().sha}" if ctx.route else "", requests=ctx.tool_ctx.requests,
-                    shadow=ctx.shadow)
+                    prompt_version=f"{ctx.prompt}@{load(ctx.prompt).sha}" if ctx.route else "", requests=ctx.tool_ctx.requests,
+                    shadow=ctx.shadow, experiment=ctx.experiment)
         when = _when(ctx)
         if state == S.SEND:
             o.action, o.reply = "answer", ctx.out["reply"]
@@ -404,7 +414,7 @@ REASON_TEXT = {
     "refund": "asked for a refund", "complaint": "is unhappy (complaint)", "fault": "reported a system fault",
     "out_of_scope": "asked something outside the business", "verification_needed": "asked about an order the number cannot be matched to",
     "validation_failed": "the assistant's draft failed checks", "cost_cap": "monthly assistant budget reached",
-    "model_unavailable": "the assistant was unavailable (degraded mode)", "injection": "message looked like a manipulation attempt",
+    "model_unavailable": "the assistant was unavailable (degraded mode)", "operator_paused": "the assistant is paused by the operator", "injection": "message looked like a manipulation attempt",
 }
 
 

@@ -38,6 +38,7 @@ another country; TB4 Lambda to database (tenant boundary enforced here); TB5 CI 
 | S-02 | TB2 | Forged WhatsApp event sent to our SNS topic | Topic policy allows only `social-messaging.amazonaws.com` from our account; SNS signature verified in intake | `test_channels.py` (SNS signature tests), DET-08 |
 | S-03 | TB6 | Stolen staff password | Cognito MFA required (TOTP), no self sign-up, 12+ char passwords | `stacks.test.ts` MFA assertion |
 | S-04 | TB5 | Workflow on a fork or feature branch assumes the prod role | OIDC trust pinned to `environment:prod`, which needs a reviewer | `stacks.test.ts` OIDC assertion |
+| S-07 | TB6 | Phished staff session (password and TOTP relayed) used to bulk-read transcripts | DET-05 read-volume alert; every request re-checks the active staff row, so `admin deactivate-staff` refuses the next request even with an unexpired token; `audit.reads_by` scopes what was read | `test_incident_tools.py`, `docs/drills/2026-10-23-tabletop-stolen-session.md`; residual risk R-03 |
 | S-05 | TB1 | Inbound integration webhook (client system) forged | HMAC-SHA256 with timestamp, 5-minute window, constant-time compare | `test_channels.py::test_webhook_signatures_reject_forgery_and_replay` |
 | T-01 | TB4 | Tenant A modifies tenant B's rows | RLS `WITH CHECK`, composite FKs with tenant_id | `test_tenant_isolation.py` |
 | T-02 | all | Audit log or event stream rewritten to hide activity | Append-only triggers (even for owner), no UPDATE/DELETE grants, CloudTrail with Object Lock | `test_audit.py`, `scp.test.ts` |

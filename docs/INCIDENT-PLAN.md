@@ -20,7 +20,7 @@ long document. Alerts and their first steps are in `docs/DETECTIONS.md`.
 ## 3. The first hour (P1)
 
 1. **Start the log** (`docs/incidents/YYYY-MM-DD-short-name.md` in a private copy, not this public repo): time, what you saw, what you did. Every action gets a line.
-2. **Contain without destroying evidence.** Prefer disabling over deleting: disable the Cognito user, detach the policy, switch the channel to "a person will reply" (`FRONTDESK_FORCE_DEGRADED=true` in SSM for the tenant), revoke sessions. Do not delete log groups, buckets or stacks.
+2. **Contain without destroying evidence.** Prefer disabling over deleting: disable the Cognito user, detach the policy, revoke sessions, and if the assistant itself is the problem, pause it for that tenant so every message goes to a person (`python -m frontdesk.admin pause-assistant --tenant <uuid> --reason "<incident id> <what>" --by "<your name>" --dry-run`, then `--write`; it takes effect on the next message, STOP keeps working, and the change is audited; `resume-assistant` undoes it). Do not delete log groups, buckets or stacks.
 3. **Preserve**: note CloudTrail event ids, export the relevant audit_log rows (an audited export), snapshot the Aurora cluster (`aws rds create-db-cluster-snapshot`).
 4. **Assess scope**: which tenants, which customers, which data, since when. `audit.who_read` and CloudTrail answer most of this.
 5. **Tell the client** within the hour for P1, with what is known and unknown.

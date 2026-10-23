@@ -347,3 +347,51 @@ Prod only accepts signed code. The `deploy-prod` workflow does this; to do it by
 
 Then run the `deploy-prod` workflow in GitHub (Actions, deploy-prod, Run workflow). It waits
 for your approval on the `prod` environment.
+
+## 20. Evidence runs once dev is up (each closes a seam in docs/DEPTH.md)
+
+Run these in order after step 17, with the virtual environment active. Each writes a file under
+`docs/` or `reports/`; commit the `docs/` ones and update the matching row in `docs/DEPTH.md`.
+
+1. **Bedrock quotas for the pilot's peak** (Well-Architected reliability item). You should see
+   the on-demand requests-per-minute and tokens-per-minute quotas for the Claude models in
+   Frankfurt; the pilot needs a few requests a minute.
+
+   ```powershell
+   aws service-quotas list-service-quotas --service-code bedrock --region eu-central-1 --profile fd-dev --query "Quotas[?contains(QuotaName, 'Claude')].[QuotaName,Value]" --output table
+   ```
+
+2. **Release evals on Bedrock** (quality floors, red-team on the real model, promptfoo): GitHub,
+   Actions, `release-evals`, Run workflow. You should see the `bedrock` job pass the Bedrock
+   floors in `docs/PLAN.md` section 5; its report artifact holds the numbers for
+   `docs/MODEL-CARD.md` section 5.
+
+3. **The LLM arm of the classifier comparison**. You should see a fourth row, "LLM (Claude
+   Haiku via Bedrock)", in `docs/evidence/classifier-comparison.md`, with its cost per 1,000.
+
+   ```powershell
+   $env:AWS_PROFILE = "fd-dev"
+   python -m frontdesk_ml.classifier compare --llm
+   ```
+
+4. **Thirty human labels**, so the judge's agreement with a person (Cohen's kappa) can be
+   reported. About 15 minutes; you answer "correct or not" for each shown answer.
+
+   ```powershell
+   python -m frontdesk_ml.label --replay reports/local/replay.jsonl --pipeline offline --labeller "Machethe DM"
+   ```
+
+5. **Model-down drill in AWS**: follow `docs/drills/2026-10-23-model-down.md`, "Run 2". You
+   should get the DET-06 and DET-02 e-mails.
+
+6. **Point-in-time restore drill in AWS**: about 30 minutes and R10 to R25. You should see every
+   restore-check row `pass` and a new `docs/drills/<date>-backup-restore-aws.md` with the
+   measured RTO and RPO.
+
+   ```powershell
+   .\scripts\restore-drill.ps1 -Profile fd-dev
+   ```
+
+7. **ZAP against the dev site**: in GitHub, Settings, Secrets and variables, Actions, Variables,
+   add `DEV_WEB_URL` = the CloudFront URL from step 17 (no trailing slash). Then Actions, `zap`,
+   Run workflow. You should see the baseline scan pass, or an issue opened listing findings.

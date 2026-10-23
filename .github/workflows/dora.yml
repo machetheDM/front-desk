@@ -1,0 +1,26 @@
+# Weekly DORA metrics (deployment frequency, lead time, change failure rate, time to restore)
+# from this repository's own deploy runs. Read-only: it needs no AWS access and no secrets.
+name: dora
+
+on:
+  schedule: [{ cron: "0 6 * * 1" }]   # Mondays 08:00 SAST
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  dora:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13" }
+      - name: DORA metrics for prod and dev deploys
+        env: { GITHUB_TOKEN: "${{ github.token }}" }
+        run: |
+          python tools/dora/dora.py --repo "${{ github.repository }}" --workflow deploy-prod.yml --weeks 12 --json dora-prod.json >> "$GITHUB_STEP_SUMMARY"
+          python tools/dora/dora.py --repo "${{ github.repository }}" --workflow deploy-dev.yml --weeks 12 --json dora-dev.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with: { name: dora, path: "dora-*.json", retention-days: 400 }

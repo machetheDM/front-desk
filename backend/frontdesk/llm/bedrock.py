@@ -19,7 +19,7 @@ from pydantic import ValidationError
 
 from ..agent import tools as agent_tools
 from .base import DraftRequest, DraftResult, ModelUnavailable, Usage
-from .prompts import canary, load
+from .prompts import CURRENT, canary, load
 from .schemas import AnswerDraft
 
 MAX_TOOL_ROUNDS = 3
@@ -45,7 +45,7 @@ class BedrockClaude:
         self.client, self.small, self.large = client, small_model, large_model
 
     def _system(self, req: DraftRequest) -> list[dict]:
-        text = load().render(assistant_name=req.assistant_name, tenant_name=req.tenant_name, canary=canary())
+        text = load(req.prompt_version or CURRENT).render(assistant_name=req.assistant_name, tenant_name=req.tenant_name, canary=canary())
         return [{"text": text}, {"cachePoint": {"type": "default"}}]
 
     def draft(self, req: DraftRequest, *, large: bool = False,

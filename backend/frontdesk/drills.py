@@ -2,11 +2,14 @@
 
     python -m frontdesk.drills model-down --dsn postgresql://...      (local, writes nothing outside the demo tenant)
     python -m frontdesk.drills model-down --target aws --profile frontdesk-dev --record docs/drills
+    python -m frontdesk.drills backup-restore --admin-dsn postgresql://postgres:...@localhost:5433/frontdesk --app-password ...
 
 A drill is evidence only if it can be run again and fails loudly when the behaviour regresses,
 so each step states what must happen, what did happen, and passes or fails; the run exits
 non-zero on any failure and backend/tests/test_drills.py runs it on every pull request. Drills
 touch the demo tenant only, so they can run in dev at any time without a change window.
+SEAM(drill-model-down-aws): the AWS run (an IAM deny on Bedrock) is a runbook in
+docs/drills/2026-10-23-model-down.md, not code, because it changes IAM in a real account.
 """
 
 from __future__ import annotations
@@ -186,11 +189,98 @@ def model_down(db: Database) -> list[Step]:
     return steps
 
 
-def record(steps: list[Step], target: str) -> str:
+def _pg_tool(name: str) -> str:
+    import glob
+    import shutil
+
+    found = shutil.which(name) or next(iter(sorted(glob.glob(f"/usr/lib/postgresql/*/bin/{name}"), reverse=True)), None)
+    if not found:
+        raise FileNotFoundError(f"{name} not found; install the PostgreSQL client tools")
+    return found
+
+
+def backup_restore(admin_dsn: str, app_password: str, workdir: pathlib.Path) -> list[Step]:
+    """A logical backup and restore of the whole database, then the restore check on the copy,
+    then a deliberate break of the copy to prove the check is not vacuous. Local only: in AWS
+    the backup is Aurora's continuous backup and scripts/restore-drill.ps1 restores it."""
+    import subprocess
+    from urllib.parse import urlsplit, urlunsplit
+
+    import psycopg
+    from psycopg import sql
+
+    from . import restore_check
+    from .db.local import LocalDatabase
+    from .db.migrate import local_runner
+
+    steps: list[Step] = []
+    u = urlsplit(admin_dsn)
+    source_db = u.path.lstrip("/")
+    target_db = f"{source_db}_restored_{uuid.uuid4().hex[:6]}"
+    dump = workdir / f"{source_db}.dump"
+    target_admin = urlunsplit(u._replace(path=f"/{target_db}"))
+    target_app = urlunsplit(u._replace(netloc=f"frontdesk_app:{app_password}@{u.hostname}:{u.port or 5432}", path=f"/{target_db}"))
+    maintenance = urlunsplit(u._replace(path="/postgres"))
+
+    def timed(name: str, expected: str, fn: Callable[[], tuple[bool, str]]) -> bool:
+        s, t0 = Step(name, expected), time.perf_counter()
+        try:
+            s.passed, s.observed = fn()
+        except Exception as e:  # noqa: BLE001 -- a drill reports every failure instead of stopping
+            s.passed, s.observed = False, f"raised {type(e).__name__}: {str(e)[:200]}"
+        s.ms = round((time.perf_counter() - t0) * 1000, 1)
+        steps.append(s)
+        return s.passed
+
+    def backup():
+        subprocess.run([_pg_tool("pg_dump"), "--format=custom", f"--file={dump}", f"--dbname={admin_dsn}"], check=True, capture_output=True)
+        return dump.stat().st_size > 0, f"{dump.stat().st_size / 1024:.0f} KiB custom-format dump"
+
+    def restore():
+        with psycopg.connect(maintenance, autocommit=True) as c:
+            c.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(target_db)))
+        subprocess.run([_pg_tool("pg_restore"), "--exit-on-error", f"--dbname={target_admin}", str(dump)], check=True, capture_output=True)
+        with psycopg.connect(target_admin, autocommit=True) as c:
+            # Database-level grants live outside the dump. Granted explicitly so the drill does not
+            # rely on PUBLIC's default CONNECT, which a hardened server revokes.
+            c.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO frontdesk_app").format(sql.Identifier(target_db)))
+        return True, f"restored into {target_db}"
+
+    def check():
+        _, query = local_runner(target_admin)
+        checks = restore_check.admin_checks(query) + restore_check.app_checks(LocalDatabase(target_app), [DEMO_TENANT_ID], None)
+        failed = [c["check"] for c in checks if not c["ok"]]
+        return not failed, f"{len(checks) - len(failed)} of {len(checks)} checks passed" + (f"; failed: {failed}" if failed else "")
+
+    def catches_a_bad_restore():
+        with psycopg.connect(target_admin, autocommit=True) as c:
+            c.execute("ALTER TABLE app.messages NO FORCE ROW LEVEL SECURITY")
+            c.execute("ALTER TABLE app.audit_log DISABLE TRIGGER audit_log_append_only")
+        _, query = local_runner(target_admin)
+        failed = [c for c in restore_check.admin_checks(query) if not c["ok"]]
+        named = " ".join(c["detail"] for c in failed)
+        return "app.messages" in named and "audit_log.audit_log_append_only" in named, f"{len(failed)} checks failed, naming: {named[:150]}"
+
+    try:
+        timed("Back up the database", "a complete logical backup is written", backup) and \
+            timed("Restore it into a new database", "pg_restore finishes with no error", restore) and \
+            timed("Check the restored copy", "migrations, forced RLS, append-only triggers, role limits, tenant data all verified", check) and \
+            timed("Break the copy on purpose", "the check fails and names the table without forced RLS and the disabled trigger", catches_a_bad_restore)
+    finally:
+        with psycopg.connect(maintenance, autocommit=True) as c:
+            c.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(target_db)))
+        dump.unlink(missing_ok=True)
+    return steps
+
+
+TITLES = {"model-down": "model down, front desk open", "backup-restore": "back up, restore, and prove the restore is safe"}
+
+
+def record(steps: list[Step], target: str, drill: str = "model-down") -> str:
     when = dt.datetime.now(dt.UTC)
     passed = sum(s.passed for s in steps)
-    lines = [f"# Drill: model down, front desk open ({when:%d %B %Y})", "",
-             f"Run: `python -m frontdesk.drills model-down` against **{target}**, demo tenant only, at {when:%H:%M} UTC.",
+    lines = [f"# Drill: {TITLES[drill]} ({when:%d %B %Y})", "",
+             f"Run: `python -m frontdesk.drills {drill}` against **{target}**, demo tenant only, at {when:%H:%M} UTC.",
              f"Result: **{passed} of {len(steps)} steps passed**.", "",
              "| # | Step | Must happen | What happened | Pass | ms |", "|---|---|---|---|---|---|"]
     for i, s in enumerate(steps, 1):
@@ -202,7 +292,9 @@ def main(argv: list[str] | None = None) -> int:
     from .demo_tenant import connect_target
 
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("drill", choices=["model-down"])
+    ap.add_argument("drill", choices=["model-down", "backup-restore"])
+    ap.add_argument("--admin-dsn", help="backup-restore: the database to back up, as its owner")
+    ap.add_argument("--app-password", help="backup-restore: frontdesk_app's password on this server")
     ap.add_argument("--target", choices=["local", "aws"], default="local")
     ap.add_argument("--dsn")
     ap.add_argument("--profile")
@@ -212,12 +304,19 @@ def main(argv: list[str] | None = None) -> int:
     if a.target == "aws" and a.env != "dev":
         print("Drills run in dev only.", file=sys.stderr)
         return 2
-    steps = model_down(connect_target(a))
-    text = record(steps, "local Postgres" if a.target == "local" else f"AWS {a.env}")
+    if a.drill == "backup-restore":
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as d:
+            steps = backup_restore(a.admin_dsn, a.app_password, pathlib.Path(d))
+        text = record(steps, "local Postgres (pg_dump and pg_restore)", a.drill)
+    else:
+        steps = model_down(connect_target(a))
+        text = record(steps, "local Postgres" if a.target == "local" else f"AWS {a.env}", a.drill)
     print(text)
     if a.record:
         a.record.mkdir(parents=True, exist_ok=True)
-        (a.record / f"{dt.date.today():%Y-%m-%d}-model-down.run.md").write_text(text)
+        (a.record / f"{dt.date.today():%Y-%m-%d}-{a.drill}.run.md").write_text(text)
     return 0 if all(s.passed for s in steps) else 1
 
 

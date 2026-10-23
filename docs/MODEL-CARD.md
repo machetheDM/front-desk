@@ -49,18 +49,24 @@ speaker. One tenant, one industry. A real client's replay (Phase 6) is the first
 
 ## 5. Results
 
-### Offline baseline (measured 22 October 2026, `reports/` artefact of CI run)
+### Offline baseline (measured 23 October 2026, `docs/evidence/eval-offline-2026-10-23.md`)
 
 | Metric | Test (gated) | Holdout (honest) | Dev (tuned on) |
 |---|---|---|---|
-| Retrieval recall@5 | 0.96 | 0.88 | 1.00 |
-| Retrieval MRR | 0.92 | 0.76 | 0.96 |
-| Answer correctness | 0.78 | 0.52 | 0.92 |
+| Retrieval recall@5 | 0.98 | 0.88 | 1.00 |
+| Retrieval MRR | 0.93 | 0.76 | 0.96 |
+| Answer correctness | 0.80 | 0.52 | 0.92 |
 | Groundedness of sent answers | 1.00 | 1.00 | 1.00 |
-| Correct answer-or-handoff decision | 0.85 | 0.70 | 0.94 |
+| Correct answer-or-handoff decision | 0.86 | 0.70 | 0.94 |
 | Unanswerable handed over | 0.875 | 0.83 | 1.00 |
 | PII patterns reaching a model | 0 | 0 | 0 |
 | Red-team attack success | 0 of 42 | | |
+
+Change since 22 October (`eval-offline-2026-10-22.md`): one glossary entry, "office hours" ->
+"opening hours", added because the demo replay handed "what are your office hours" over three
+times although the documents answer it. One test question uses the same wording, which is the
+whole test-split gain (recall@5 0.96 -> 0.98, correctness 0.78 -> 0.80). The holdout did not
+move, which is the number to quote.
 
 Read this honestly: retrieval generalises (0.88 recall@5 on new questions); the heuristic
 answerability decision does not (0.70). The baseline never invents (groundedness 1.00): when

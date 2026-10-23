@@ -5,6 +5,9 @@
     python -m frontdesk.admin create-staff --profile fd-dev --pool <pool id> --tenant demo --email ... --name ... --role owner --dry-run
     python -m frontdesk.admin map-whatsapp --profile fd-dev --tenant demo --phone-number-id phone-number-id-... --dry-run
     python -m frontdesk.admin create-widget-key --profile fd-dev --tenant demo --origin https://www.example.co.za --dry-run
+    python -m frontdesk.admin start-experiment --profile fd-dev --tenant <uuid> --prereg experiments/<id>.yaml --approved-by "Owner name" --dry-run
+    python -m frontdesk.admin stop-experiment --profile fd-dev --tenant <uuid> --id <id> --reason "guardrail breached" --dry-run
+    python -m frontdesk.admin pause-assistant --profile fd-dev --tenant <uuid> --reason "INC-... wrong prices" --by "Machethe DM" --dry-run
 """
 
 from __future__ import annotations
@@ -140,6 +143,40 @@ def cmd_block_sender(a) -> int:
     return 0
 
 
+def cmd_start_experiment(a) -> int:
+    from . import experiments
+
+    execute(_db(a), experiments.start_plan(_tenant(a.tenant), pathlib.Path(a.prereg), a.approved_by), write=a.write)
+    return 0
+
+
+def cmd_stop_experiment(a) -> int:
+    from . import experiments
+
+    execute(_db(a), experiments.stop_plan(_tenant(a.tenant), a.id, a.reason), write=a.write)
+    return 0
+
+
+def cmd_pause_assistant(a) -> int:
+    from . import controls
+
+    plan = (controls.pause_plan if a.cmd == "pause-assistant" else controls.resume_plan)(_tenant(a.tenant), a.reason, a.by)
+    execute(_db(a), plan, write=a.write)
+    return 0
+
+
+def cmd_deactivate_staff(a) -> int:
+    from . import staff
+
+    def cognito(email: str) -> None:
+        idp = _session(a.profile).client("cognito-idp")
+        idp.admin_user_global_sign_out(UserPoolId=a.pool, Username=email)
+        idp.admin_disable_user(UserPoolId=a.pool, Username=email)
+
+    execute(_db(a), staff.deactivate_plan(_tenant(a.tenant), a.email, a.reason, a.by, cognito), write=a.write)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--profile")
@@ -154,11 +191,23 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("map-whatsapp"); p.add_argument("--tenant", required=True); p.add_argument("--phone-number-id", required=True)
     p = sub.add_parser("create-widget-key"); p.add_argument("--tenant", required=True); p.add_argument("--origin", action="append", required=True)
     p = sub.add_parser("block-sender"); p.add_argument("--tenant", required=True); p.add_argument("--number", required=True)
+    p = sub.add_parser("start-experiment"); p.add_argument("--tenant", required=True); p.add_argument("--prereg", required=True)
+    p.add_argument("--approved-by", required=True)
+    p = sub.add_parser("stop-experiment"); p.add_argument("--tenant", required=True); p.add_argument("--id", required=True)
+    p.add_argument("--reason", required=True)
+    p = sub.add_parser("deactivate-staff"); p.add_argument("--tenant", required=True); p.add_argument("--email", required=True)
+    p.add_argument("--pool", required=True); p.add_argument("--reason", required=True); p.add_argument("--by", required=True)
+    for name in ("pause-assistant", "resume-assistant"):
+        p = sub.add_parser(name); p.add_argument("--tenant", required=True); p.add_argument("--reason", required=True)
+        p.add_argument("--by", required=True, help="your name, for the audit log")
     for sp in sub.choices.values():
         add_write_flags(sp)
     a = ap.parse_args(argv)
     return {"create-tenant": cmd_create_tenant, "load-docs": cmd_load_docs, "create-staff": cmd_create_staff,
-            "map-whatsapp": cmd_map_whatsapp, "create-widget-key": cmd_create_widget_key, "block-sender": cmd_block_sender}[a.cmd](a)
+            "map-whatsapp": cmd_map_whatsapp, "create-widget-key": cmd_create_widget_key, "block-sender": cmd_block_sender,
+            "start-experiment": cmd_start_experiment, "stop-experiment": cmd_stop_experiment,
+            "pause-assistant": cmd_pause_assistant, "resume-assistant": cmd_pause_assistant,
+            "deactivate-staff": cmd_deactivate_staff}[a.cmd](a)
 
 
 if __name__ == "__main__":

@@ -34,3 +34,13 @@ def who_read(tx: Transaction, resource_type: str, resource_id: str) -> list[dict
            WHERE action = 'read' AND resource_type = :rt AND resource_id = :rid ORDER BY at""",
         {"rt": resource_type, "rid": str(resource_id)},
     )
+
+
+def reads_by(tx: Transaction, actor_id: str, since: Any, until: Any) -> list[dict[str, Any]]:
+    """Answers the incident question the other way round: 'what did this account read, and when'.
+    Scoping a stolen session starts here (docs/INCIDENT-PLAN.md step 4)."""
+    return tx.execute(
+        """SELECT resource_type, resource_id, at FROM app.audit_log
+           WHERE action = 'read' AND actor_id = :a AND at >= :s AND at < :u ORDER BY at""",
+        {"a": actor_id, "s": since, "u": until},
+    )

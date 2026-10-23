@@ -1,4 +1,4 @@
-"""Operations Lambdas: migrations, post-deploy smoke test, nightly analytics export."""
+"""Operations Lambdas: migrations, post-deploy smoke test, nightly analytics export, weekly drift."""
 
 from __future__ import annotations
 
@@ -91,3 +91,22 @@ def export_events(event, context):
     ):
         athena.start_query_execution(QueryString=q, WorkGroup=wg)  # nosemgrep -- identifiers come from our own env, not input
     return {"exported": n, "day": f"{since:%Y-%m-%d}"}
+
+
+def drift(event, context):
+    """Weekly (Monday 07:00 SAST): PSI on each tenant's intent mix. A metric per tenant for the
+    dashboard, one per environment (the maximum) for the DET-12 alarm, and no text anywhere."""
+    from .. import drift as drift_mod
+    from .. import telemetry
+    from .common import db
+
+    out, worst = {}, 0.0
+    for tid in routing.tenant_ids():
+        with db().transaction(tid) as tx:
+            r = drift_mod.weekly(tx)
+        out[str(tid)] = {"psi": r["psi"], "level": r["level"], "current_messages": r["current_messages"]}
+        if r["level"] != "too few to judge":
+            telemetry.metric("IntentMixPsi", r["psi"], "None", Tenant=str(tid)[:8])
+            worst = max(worst, r["psi"])
+    telemetry.metric("IntentMixPsiMax", worst, "None")
+    return out

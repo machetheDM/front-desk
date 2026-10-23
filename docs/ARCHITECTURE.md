@@ -120,7 +120,7 @@ get the Free plan with credits instead of the old 12-month tier) and must be re-
 | Secrets Manager | Aurora credentials (the Data API requires Secrets Manager): admin for migrations, app for Lambdas | 30-day trial per secret ‡ | 0.40 per secret-month | Exactly two per environment |
 | SSM Parameter Store SecureString | All other secrets and config | Standard parameters free ‡ | Advanced parameters 0.05/month (not used) | n/a |
 | Cognito (Lite) | Staff sign-in with MFA | 10,000 MAU † | 0.0055 per MAU | Staff only, so effectively free |
-| CloudWatch | Logs, metrics, alarms, detections | 5 GB logs, 10 metrics, 10 alarms ‡ | 0.678 per GB ingested; 0.10 per alarm | 14-day log retention by default to cap it |
+| CloudWatch | Logs, metrics, alarms, detections, one operations dashboard | 5 GB logs, 10 metrics, 10 alarms, 3 dashboards ‡ | 0.678 per GB ingested; 0.10 per alarm; 3.00 per dashboard beyond 3 | 14-day log retention by default to cap it; one dashboard per environment |
 | EventBridge | Detection rules, schedules | AWS-service events free ‡ | Custom events 1.00 per 1M | n/a |
 | CloudTrail | Org trail to log-archive | First copy of management events free † | 0.00002 per extra event | We keep one trail |
 | Athena | Insights queries over Iceberg | None | 6.00 per TB scanned | Workgroup cap of 1 GB scanned per query |

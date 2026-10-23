@@ -26,6 +26,7 @@ phrases:
   "payment plan": "finance"
   "bought online": "bought elsewhere"
   "bought it online": "bought elsewhere"
+  "office hours": "open opening hours when open"  # found by the demo replay: handed over three times
 words:
   theko: "price cost"
   tefo: "payment pay"

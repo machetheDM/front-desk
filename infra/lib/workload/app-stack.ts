@@ -375,6 +375,37 @@ export class AppStack extends Stack {
     // 02:15 SAST nightly (00:15 UTC).
     new events.Rule(this, 'NightlyExport', { schedule: events.Schedule.cron({ minute: '15', hour: '0' }), targets: [new targets.LambdaFunction(exporter)] });
 
+    // One page for the operator: is the front desk answering, how fast, at what cost, and is
+    // anything being attacked or drifting. Built from the same metrics the alarms use.
+    const m = (metricName: string, statistic = 'Sum', dims: Record<string, string> = {}, period = Duration.minutes(5)) =>
+      new cloudwatch.Metric({ namespace: 'FrontDesk', metricName, dimensionsMap: { Env: envName, ...dims }, statistic, period });
+    const routes = ['small', 'large', 'rules'];
+    new cloudwatch.Dashboard(this, 'Operations', {
+      dashboardName: `${prefix}-operations`,
+      widgets: [
+        [
+          new cloudwatch.GraphWidget({ title: 'Answer latency p90 by route (ms)', width: 12, left: routes.map((r) => m('AnswerLatencyMs', 'p90', { Route: r })) }),
+          new cloudwatch.GraphWidget({ title: 'Model cost (USD) by route', width: 12, left: routes.map((r) => m('ModelCostUsd', 'Sum', { Route: r }, Duration.hours(1))) }),
+        ],
+        [
+          new cloudwatch.GraphWidget({ title: 'Degraded (DET-06) and paused', width: 8, left: [m('Degraded'), m('AssistantPaused')] }),
+          new cloudwatch.GraphWidget({ title: 'Guardrail interventions (DET-07) and rate limits (DET-09)', width: 8, left: [m('GuardrailIntervened'), m('RateLimited')] }),
+          new cloudwatch.GraphWidget({ title: 'Intent-mix drift, worst tenant (DET-12)', width: 8, left: [m('IntentMixPsiMax', 'Maximum', {}, Duration.days(1))],
+            leftAnnotations: [{ value: 0.25, label: 'shifted' }] }),
+        ],
+        [
+          new cloudwatch.GraphWidget({ title: 'Answer step errors and duration', width: 12, left: [answer.metricErrors()], right: [answer.metricDuration({ statistic: 'p90' })] }),
+          new cloudwatch.AlarmStatusWidget({ title: 'Alarms', width: 12, alarms: [degraded, answerErrors] }),
+        ],
+      ],
+    });
+
+    // Weekly drift on each tenant's intent mix; DET-12 (DetectionStack) alarms on the result.
+    // 07:00 SAST on Mondays, so the owner reads it with the week's first messages.
+    const drift = fn('drift', 'frontdesk.handlers.ops.drift', { timeout: Duration.minutes(5) });
+    this.grantSsmRead(drift, envName);
+    new events.Rule(this, 'WeeklyDrift', { schedule: events.Schedule.cron({ minute: '0', hour: '5', weekDay: 'MON' }), targets: [new targets.LambdaFunction(drift)] });
+
     // ---------- Inbox runtime config (read by the static inbox at startup) ----------
     new s3deploy.BucketDeployment(this, 'InboxConfig', {
       destinationBucket: props.webBucket,

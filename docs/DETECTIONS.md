@@ -135,3 +135,26 @@ says it happened.
 
 1. Read the conversation. Add the extraction technique to `evals/redteam/cases.yaml`.
 2. Rotate the canary (`FRONTDESK_PROMPT_CANARY` in SSM) and review the prompt for anything that should not be there (it must never contain secrets).
+
+## DET-12
+
+**What customers ask about shifted this week (intent-mix PSI 0.25 or more). P3.**
+
+Not an attack: a quality warning. The documents, glossary and evaluation set were built for
+last month's questions; when the mix moves, answers can get worse without any code change.
+The weekly job (`handlers/ops.drift`, Mondays 07:00 SAST) compares each tenant's last seven
+days with the four weeks before (`frontdesk/drift.py`). It alarms only when the shift is large
+(PSI 0.25 or more after merging intents under 5%) *and* unlikely to be noise (chi-square
+p < 0.01); weeks with fewer than 30 messages are "too few to judge". Measured false-alarm rate
+about 2% of weeks (`docs/evidence/insights-demo.md` section 4).
+
+1. Open the drift Lambda's latest invocation (`/frontdesk/<env>/drift` log group): it lists
+   `psi`, `level` and message counts per tenant, with no text. The insights screen shows the
+   tenant's top intents for the same week.
+2. Read the moved intents against the calendar: load-shedding stages, a price change, a new
+   product, a marketing campaign. A known cause with answers in the documents needs no action.
+3. If the moved intent is mostly handed over as "unanswerable", that is an FAQ gap: add it to
+   the client's next document update (owner report "could not answer" list).
+4. Add ten real, redacted examples of the new questions to the client's evaluation set and
+   rerun the evals before the next release.
+

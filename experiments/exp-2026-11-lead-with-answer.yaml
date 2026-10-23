@@ -1,0 +1,39 @@
+# Pre-registration. Written before any data exists; `admin start-experiment` stores this file's
+# SHA-256 with the running experiment, so editing it afterwards is visible and refused.
+# Checked by: python -m frontdesk_ml.ab plan experiments/exp-2026-11-lead-with-answer.yaml
+id: exp-2026-11-lead-with-answer
+status: draft            # draft -> approved -> running -> stopped -> analysed
+registered: 2026-10-23
+owner: Machethe DM
+hypothesis: >
+  Customers on WhatsApp read the first line. A reply that starts with the direct answer
+  (prompt answer.v2) leaves more answered customers needing no person afterwards than the
+  current reply (answer.v1). The two prompts differ only in rule 7.
+unit: customer; assignment is sha256(experiment id + customer number), 50/50, sticky for the whole experiment
+population: customers whose first message in the experiment window was answered by the assistant
+arms:
+  control: answer.v1
+  treatment: answer.v2
+primary_metric:
+  name: resolved_without_staff
+  definition: no handed_over or degraded event in that conversation after the first answer (frontdesk.experiments.counts)
+  baseline: 0.80
+  baseline_source: >
+    Assumed. Replace with the pilot client's first two weeks (answered conversations not later
+    handed over, from the insights screen) and recompute the sample size before approval.
+  minimum_detectable_effect: 0.05     # absolute: 80% -> 85%
+alpha: 0.05                           # two-sided
+power: 0.80
+sample_size_per_arm: 906              # must equal the tool's answer for the numbers above
+guardrails:
+  asked_for_person_max_increase: 0.02 # absolute; checked at every look, the only reason to stop early
+  before_start: answer.v2 passes every Bedrock floor in docs/PLAN.md section 5 in the release evals
+stopping: fixed horizon. One analysis when both arms reach the planned size. Stop early only for a guardrail breach (harm), never for success.
+decision_rule: >
+  Ship answer.v2 if p < alpha and the difference is positive and no guardrail is breached.
+  Otherwise keep answer.v1. Report the difference with its Newcombe 95% interval either way.
+known_limits: >
+  At one SME's volume this is slow: about 50 answered customers a week means roughly 36 weeks.
+  Options, decided before start: accept a larger effect (+0.10 needs 199 per arm, about 8
+  weeks), or pool several tenants' results, which needs each client's written agreement
+  (refusal 6 covers training; pooling outcome counts is not training, but it is still their data).
