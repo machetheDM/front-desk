@@ -2,7 +2,8 @@
 
 Built from templates and slot fillers with a fixed seed, so it is reproducible and clearly
 synthetic. It is deliberately *not* drawn from the evaluation sets: the classifier is scored
-on evals/datasets/*.yaml, which it has never seen. When a client's real, consented and
+on evals/datasets/*.yaml, which it has never seen, and ml/tests/test_classifier_training.py
+fails the build if any evaluation question appears here (it caught twelve in the first draft). When a client's real, consented and
 redacted messages exist, they replace this (refusal 6: never across tenants without consent).
 
     python -m frontdesk_ml.training_data   (writes evals/datasets/train.synthetic.jsonl)
@@ -26,19 +27,19 @@ DAYS = ["Monday", "Tuesday", "next week", "the 3rd", "tomorrow", "Friday morning
 TEMPLATES: list[tuple[str, str | None, list[str]]] = [
     ("pricing", None, ["How much is the {p}?", "price for the {p} please", "what does the {p} cost installed", "hw much 4 the {p}",
                        "Theko ya {p} ke bokae?", "Hoeveel kos die {p}?", "Can you send me the price of the {p}", "cost of {p} in {pl}?"]),
-    ("warranty", None, ["How long is the warranty on the {p}?", "{p} warranty?", "what does the warranty not cover", "how do I claim warranty",
+    ("warranty", None, ["what warranty comes with the {p}", "{p} warranty?", "what does the warranty not cover", "how do I claim warranty",
                         "waranty on the {p} how many yrs", "Tiisetso ya {p}?", "is my {p} still under warranty after 2 years"]),
     ("installation", None, ["How long does it take to install the {p}?", "do I need to be home for the install", "can you install on a tin roof",
                             "will the {p} run my geyser", "do I need municipal approval", "how many hours will the battery last in loadshedding",
                             "Go tsenya {p} go tsea nako e kae?"]),
-    ("payment", None, ["Can I pay by card?", "do you take EFT", "how much deposit do I pay", "when do I pay the balance", "Nka lefa ka card?"]),
+    ("payment", None, ["card machine available?", "bank transfer ok?", "how much deposit do I pay", "the rest of the money is due when", "Na le amogela card?"]),
     ("hours", None, ["What time do you open?", "are you open on Saturday", "closing time today?", "Le bula neng?", "Is julle oop op Sondag?"]),
-    ("location", None, ["Where is your showroom?", "what is your address", "Le kae?", "where can I come see you"]),
-    ("service_area", None, ["Do you install in {pl}?", "travel fee to {pl}?", "do you work in {pl}", "Le tsenya ko {pl}?"]),
-    ("booking", None, ["How do I book an installation?", "can I change my installation date", "how do bookings work"]),
-    ("order_status", None, ["What is the status of my order BSE-1042?", "where is my order", "has my order BSE-1061 been installed", "order update please"]),
-    ("general", None, ["Do you speak Afrikaans?", "who handles accounts", "thank you", "who do I talk to about payments", "are you a company in Polokwane"]),
-    ("human", "human_requested", ["I want to talk to a person", "can a real person call me", "let me speak to {n}", "PERSON", "are you a bot? I want a human",
+    ("location", None, ["showroom address pls", "what is your address", "Le kae?", "where can I come see you"]),
+    ("service_area", None, ["Do you install in {pl}?", "travel fee to {pl}?", "you guys do jobs in {pl}?", "Le tsenya ko {pl}?"]),
+    ("booking", None, ["whats the process to get an install date", "can I change my installation date", "how do bookings work"]),
+    ("order_status", None, ["any news on order BSE-1077", "where is my order", "has my order BSE-1061 been installed", "order update please"]),
+    ("general", None, ["Do you speak Afrikaans?", "who handles accounts", "thanks a lot", "who do I talk to about payments", "are you a company in Polokwane"]),
+    ("human", "human_requested", ["i need a human agent", "can a real person call me", "let me speak to {n}", "human please", "are you a bot? I want a human",
                                   "Ke kopa go bolela le motho", "connect me to {n} please", "I need to speak with someone now"]),
     ("discount", "negotiation", ["Can you do the {p} for R5 000 less?", "give me a discount on the {p}", "I got a cheaper quote, can you match it",
                                  "if I pay cash will you drop the price", "best price for the {p}?", "le ka nthusa ka discount?",

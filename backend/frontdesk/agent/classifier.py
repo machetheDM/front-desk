@@ -5,9 +5,11 @@ hashing features the offline embedder uses) and exported as plain weights to
 data/classifier.v1.json, so the Lambda package needs no scikit-learn. Inference is a few
 matrix-vector products: under a millisecond, and free, compared with a model call.
 
-How it is used (agent/state_machine.py): the rules decide first because they are auditable.
-The classifier is a second opinion only when it is very confident a person is needed and the
-rules saw nothing; the threshold was chosen on the dev split (docs/MODEL-CARD.md section 6).
+How it is used (agent/state_machine.py `_shadow`): in shadow mode. The rules decide, because
+they are auditable and they beat this model on both evaluation splits
+(docs/evidence/classifier-comparison.md). The model's prediction is stored next to the rules'
+decision in every event payload, so the comparison can be repeated on real traffic after a
+client's consented data retrains it (docs/MODEL-CARD.md section 6).
 """
 
 from __future__ import annotations
@@ -44,8 +46,7 @@ def features(text: str) -> np.ndarray:
 
 
 class Classifier:
-    def __init__(self, path: pathlib.Path = MODEL) -> None:
-        m = json.loads(path.read_text())
+    def __init__(self, m: dict) -> None:
         self.version = m["version"]
         self.np_w = np.asarray(m["needs_person"]["coef"], dtype=np.float32)
         self.np_b = float(m["needs_person"]["intercept"])
@@ -57,6 +58,10 @@ class Classifier:
         self.intent_b = np.asarray(m["intent"]["intercept"], dtype=np.float32)
         self.threshold = float(m.get("handoff_threshold", 0.85))
 
+    @classmethod
+    def load(cls, path: pathlib.Path = MODEL) -> Classifier:
+        return cls(json.loads(path.read_text()))
+
     def predict(self, text: str) -> Prediction:
         x = features(text)
         p = 1 / (1 + np.exp(-(self.np_w @ x + self.np_b)))
@@ -67,4 +72,4 @@ class Classifier:
 
 @functools.cache
 def default() -> Classifier | None:
-    return Classifier() if MODEL.exists() else None
+    return Classifier.load() if MODEL.exists() else None

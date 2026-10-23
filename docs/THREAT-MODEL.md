@@ -3,7 +3,7 @@
 Scope: Front Desk as deployed per `docs/ARCHITECTURE.md`. Method: STRIDE per trust boundary,
 then AI-specific threats, then attack trees for the three outcomes that would end the business.
 Each threat names its control and the evidence (test, rule, or detection) that the control works.
-Living document: reviewed at the end of each phase; last review Phase 2.
+Living document: reviewed at the end of each phase; last review Phase 4 (23 October 2026).
 
 ## 1. Assets
 
@@ -70,6 +70,8 @@ Mapped to OWASP Top 10 for LLM Applications (2025) and MITRE ATLAS in `docs/AI-S
 | AI-06 | Excessive agency | Tools are typed, tenant-scoped, and none can refund, discount or book beyond policy |
 | AI-07 | Abuse of a public bot as free general-purpose LLM | Topic restriction in prompt and Guardrails; off-topic requests handed over or refused; rate limits |
 | AI-08 | Model misbehaviour after a model or prompt change | Versioned prompts; evals and red-team as build gates; canary deploy with rollback |
+| AI-09 | A trained model in the request path takes the service down or leaks text | Shadow mode: redacted input only, no text stored, failures contained; weights rebuilt from committed data in a test (`test_classifier.py`, `test_classifier_training.py`) |
+| AI-10 | Markup or a link smuggled into a reply (improper output handling) | Validator rejects URLs not in sources; widget renders text only; WhatsApp link previews off (rt41, rt42) |
 
 ## 5. Attack trees
 

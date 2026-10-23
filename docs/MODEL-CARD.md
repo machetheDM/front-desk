@@ -2,7 +2,7 @@
 
 Version: answer.v1 prompt, offline-extractive-v1 baseline, Bedrock pipeline configured
 (Claude Haiku 5.5 / Sonnet 5.5, Cohere Embed Multilingual v3, Cohere Rerank 3.5, Guardrails),
-handoff classifier v1 (see section 6). Date: 22 October 2026.
+handoff classifier v1 in shadow mode (section 6). Date: 23 October 2026.
 
 ## 1. What it does
 
@@ -38,7 +38,10 @@ output validator; the language model is one component, not the whole system.
   (English, Sepedi-English code-switched, Afrikaans-English, WhatsApp spelling), each labelled
   with the right decision, gold chunks and required facts. Split dev (36) / test (74).
 - `evals/datasets/bushveld-holdout.synthetic.yaml`: 40 questions written after tuning, run once.
-- `evals/redteam/cases.yaml`: 40 attack cases mapped to OWASP LLM Top 10 (2025) and MITRE ATLAS.
+- `evals/redteam/cases.yaml`: 42 attack cases mapped to OWASP LLM Top 10 (2025) and MITRE ATLAS
+  (control mapping in `docs/AI-SECURITY.md`).
+- `evals/datasets/train.synthetic.jsonl`: 380 template-generated rows for the classifier only,
+  disjoint from both evaluation sets (a test fails the build on any overlap).
 
 **Limitations of the data.** All questions are synthetic, written by the developer; real
 customer phrasing is messier. Sepedi phrasing has not yet been reviewed by a first-language
@@ -57,7 +60,7 @@ speaker. One tenant, one industry. A real client's replay (Phase 6) is the first
 | Correct answer-or-handoff decision | 0.85 | 0.70 | 0.94 |
 | Unanswerable handed over | 0.875 | 0.83 | 1.00 |
 | PII patterns reaching a model | 0 | 0 | 0 |
-| Red-team attack success | 0 of 40 | | |
+| Red-team attack success | 0 of 42 | | |
 
 Read this honestly: retrieval generalises (0.88 recall@5 on new questions); the heuristic
 answerability decision does not (0.70). The baseline never invents (groundedness 1.00): when
@@ -79,8 +82,47 @@ human is measured with Cohen's kappa once at least 30 answers per pipeline are h
 
 ## 6. Handoff and intent classifier
 
-See section 7 of this card once Phase 4 lands: trained model vs rules vs LLM on accuracy,
-cost and latency.
+**Question.** Is a trained text classifier better than the hand-written rules
+(`agent/policy.py`) at spotting messages that need a person, and at labelling intent? The
+LLM arm (`ml/frontdesk_ml/llm_classifier.py`, Claude Haiku via Bedrock) is built and needs the
+dev account to run (`python -m frontdesk_ml.classifier compare --llm`).
+
+**Model.** Three logistic regressions (needs-person, reason, intent) on 1024-d hashed
+character n-grams of the glossary-expanded text. Trained with scikit-learn, exported as plain
+weights (`backend/frontdesk/data/classifier.v1.json`, 0.2 MB) and served with numpy in the
+Lambda: no scikit-learn in the package, about 0.2 ms per message, no per-call cost. A test
+checks the numpy serving code reproduces scikit-learn's probabilities, and another rebuilds the
+committed weights from the committed data.
+
+**Training data.** 380 synthetic rows from templates (`ml/frontdesk_ml/training_data.py`,
+seeded). The first draft shared twelve sentences with the evaluation sets; the leakage test
+caught it and the templates were rewritten. The numbers below are after the fix; before it,
+the model looked better than it was (test F1 0.42 against 0.12 now).
+
+**Results** (full tables: `docs/evidence/classifier-comparison.md`; threshold 0.95 chosen on dev
+as the lowest that adds no false handoff over the rules alone):
+
+| Split | System | Needs-person F1 | Precision | Recall | Intent accuracy |
+|---|---|---|---|---|---|
+| test (74) | rules | 0.97 | 1.00 | 0.93 | 0.84 |
+| test (74) | model | 0.12 | 1.00 | 0.07 | 0.74 |
+| holdout (40) | rules | 0.80 | 1.00 | 0.67 | 0.68 |
+| holdout (40) | model | 0.00 | 0.00 | 0.00 | 0.70 |
+
+The model ranks well without a threshold (ROC AUC 0.98 test, 0.96 holdout), and the decisive
+analysis is on the only cases where it could add anything, the handoffs the rules miss. On the
+holdout the rules missed three (a bulk discount, an angry complaint, a Sepedi request for a named
+person); the model scored them 0.93, 0.91 and 0.73, at or above every true non-handoff (highest
+0.73). But the dev split contains no rule misses at all, so no threshold chosen honestly on dev
+can claim that benefit, and choosing it on the holdout would be tuning on the test.
+
+**Decision: shadow mode.** The rules act. The model's prediction is stored in every event
+payload (`shadow`: probability, would-hand-over, reason, intent, version), computed on
+redacted text only, never shown to the customer, and a failure in it is recorded and ignored
+(`backend/tests/test_classifier.py`). What would change the decision: a model retrained on a
+client's consented, redacted messages, with a dev split that contains real rule misses
+(conversations staff took over after an answer), beating the rules on that client's holdout at
+no added false handoffs. Retraining never mixes tenants (refusal 6).
 
 ## 7. Risks and mitigations
 
@@ -91,7 +133,8 @@ cost and latency.
 | PII sent abroad | Redaction before any model call; PII metric must be 0 | `test_redaction.py` |
 | Cross-tenant leakage | RLS on chunks and embeddings | `test_tenant_isolation.py`, red-team rt21/rt22 |
 | Unequal quality across languages | Per-language metrics in every eval report | eval-report.md "By language" |
-| Model outage | Degraded mode hands over with a template summary | `test_degraded_mode.py` |
+| Model outage | Degraded mode hands over with a template summary | `test_degraded_mode.py`, `docs/drills/2026-10-23-model-down.md` |
+| A trained model acting on a weak signal | Classifier in shadow mode only; promotion needs a client holdout | section 6, `test_classifier.py` |
 
 ## 8. Ethical considerations
 

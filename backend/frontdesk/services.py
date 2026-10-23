@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 
+from .agent import classifier
 from .agent.state_machine import Deps
 from .db import Transaction
 from .integrations.orders import ConfigOrdersAdapter
@@ -26,7 +27,7 @@ def build(pipeline: str = "offline", *, cap: bool = False) -> Deps:
         from .llm.offline import ExtractiveAnswerer
 
         return Deps(model=ExtractiveAnswerer(), embedder=HashingEmbedder(), reranker=LexicalReranker(),
-                    over_cap=metering.over_cap if cap else None, orders_factory=orders_for)
+                    over_cap=metering.over_cap if cap else None, orders_factory=orders_for, shadow=classifier.default())
     if pipeline == "bedrock":
         from .llm.bedrock import BedrockClaude
         from .llm.guardrails import BedrockGuardrail
@@ -38,6 +39,6 @@ def build(pipeline: str = "offline", *, cap: bool = False) -> Deps:
             embedder=BedrockCohereEmbedder(region=region),
             reranker=BedrockCohereReranker(region=region),
             guardrail=BedrockGuardrail(os.environ["FRONTDESK_GUARDRAIL_ID"], os.environ.get("FRONTDESK_GUARDRAIL_VERSION", "1"), region=region),
-            over_cap=metering.over_cap if cap else None, orders_factory=orders_for,
+            over_cap=metering.over_cap if cap else None, orders_factory=orders_for, shadow=classifier.default(),
         )
     raise ValueError(f"unknown pipeline {pipeline}")

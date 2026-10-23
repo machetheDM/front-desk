@@ -80,3 +80,14 @@ def test_degrade_hands_over_with_a_person_named_even_without_the_model(demo_db):
     assert o.action == "degraded" and "A person from Bushveld" in o.reply
     with demo_db.transaction(DEMO_TENANT_ID) as tx:
         assert tx.scalar("SELECT count(*) FROM app.handoffs WHERE conversation_id = :c", {"c": rec.conversation_id}) == 1
+
+
+def test_every_tool_call_is_recorded_in_the_event_without_its_arguments(demo_db):
+    rec = pipeline.receive(demo_db, inbound("What is the status of my order BSE-1042?"))
+    o = pipeline.answer(demo_db, services.build("offline"), DEMO_TENANT_ID, rec)
+    assert o.tool_calls
+    with demo_db.transaction(DEMO_TENANT_ID) as tx:
+        payloads = [e["payload"] for e in tx.execute(
+            "SELECT payload FROM app.conversation_events WHERE conversation_id = :c AND type <> 'message_received'", {"c": rec.conversation_id})]
+    assert payloads[0]["tools"] == [{"tool": "get_order_status", "ok": False}]  # a stranger's number is not told the order
+    assert "BSE-1042" not in str(payloads)

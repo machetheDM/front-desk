@@ -149,6 +149,12 @@ def persist(tx: Transaction, rec: Received, o: Outcome) -> str:
     )
     base = {"message_id": out_id, "in_reply_to": rec.message_id, "intent": o.intent, "trace": o.trace,
             "latency_ms": round(o.latency_ms, 1), "route": o.route, "model": o.model_id, "prompt": o.prompt_version}
+    if o.shadow:
+        base["shadow"] = o.shadow
+    if o.tool_calls:
+        # Name and outcome only: arguments and results can carry customer details, and the
+        # event stream must stay free of them (test_audit.py).
+        base["tools"] = [{"tool": r.get("tool", "unknown"), "ok": bool(r.get("ok"))} for r in o.tool_calls]
     if o.action == "answer":
         events.emit(tx, rec.conversation_id, "answer_sent", {**base, "citations": [c.chunk_id for c in o.citations],
                                                              "first_reply_seconds": round(o.latency_ms / 1000, 3)})

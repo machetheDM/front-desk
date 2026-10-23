@@ -97,6 +97,7 @@ class Deps:
     orders: OrdersAdapter | None = None
     orders_factory: Any = None  # callable(tx) -> OrdersAdapter | None, per tenant
     over_cap: Any = None  # callable(tx) -> bool; None means no cap check (replay)
+    shadow: Any = None  # agent.classifier.Classifier: its prediction is logged, never acted on
     k: int = 5
 
 
@@ -123,6 +124,7 @@ class Outcome:
     guardrail_intervened: bool = False
     prompt_version: str = ""
     requests: list[dict] = field(default_factory=list)
+    shadow: dict | None = None
 
     @property
     def answered(self) -> bool:
@@ -151,6 +153,7 @@ class _Ctx:
     problems: list[str] = field(default_factory=list)
     guardrail_hit: bool = False
     tool_ctx: tools.ToolContext | None = None
+    shadow: dict | None = None
 
 
 class Agent:
@@ -191,6 +194,7 @@ class Agent:
         decision = policy.evaluate(text)
         ctx.rule = decision.rule
         ctx.intent = policy.keyword_intent(text)
+        ctx.shadow = _shadow(ctx.deps.shadow, text)
         if decision.rule == "injection":
             ctx.reason = "injection"
             return S.REFUSE
@@ -295,7 +299,8 @@ class Agent:
                     usage=ctx.usage, model_inputs=ctx.model_inputs, retrieved=ctx.hits, tool_calls=ctx.tool_results,
                     validation_problems=ctx.problems, guardrail_intervened=ctx.guardrail_hit, model_id=ctx.model_id,
                     route=ctx.route.tier if ctx.route else "rules", route_reason=ctx.route.reason if ctx.route else (ctx.rule or ""),
-                    prompt_version=f"{PROMPT_VERSION}@{load().sha}" if ctx.route else "", requests=ctx.tool_ctx.requests)
+                    prompt_version=f"{PROMPT_VERSION}@{load().sha}" if ctx.route else "", requests=ctx.tool_ctx.requests,
+                    shadow=ctx.shadow)
         when = _when(ctx)
         if state == S.SEND:
             o.action, o.reply = "answer", ctx.out["reply"]
@@ -327,6 +332,27 @@ class Agent:
 
 
 # ----- helpers (module level so they are testable on their own) -----
+def _shadow(clf: Any, redacted_text: str) -> dict | None:
+    """The trained classifier's opinion, recorded next to what the rules decided.
+
+    Shadow mode, not a second opinion: at the threshold chosen on the dev split the
+    template-trained model adds no handoff the rules miss on either the test or the holdout set,
+    so letting it act would buy nothing (docs/evidence/classifier-comparison.md). Logging it on every real
+    message builds the comparison that decides whether a model retrained on a client's
+    consented data may ever act. It sees only redacted text, stores no text, and a failure
+    here is recorded and ignored: a broken experiment must never close the front desk.
+    """
+    if clf is None:
+        return None
+    try:
+        p = clf.predict(redacted_text)
+    except Exception as e:  # noqa: BLE001 -- any failure of an experiment is contained here
+        return {"version": getattr(clf, "version", "?"), "error": type(e).__name__}
+    return {"version": clf.version, "p_needs_person": round(p.needs_person, 3),
+            "would_hand_over": p.needs_person >= clf.threshold, "reason": p.reason,
+            "intent": p.intent, "intent_confidence": round(p.intent_confidence, 3)}
+
+
 
 def disclosure(tenant: dict) -> str:
     # Refusal 1: the first message says it is an assistant, and how to reach a person.

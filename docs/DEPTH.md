@@ -4,7 +4,7 @@ An item is **done** only when its evidence exists and the link below opens it. *
 the code is written and tested against fakes, and the remaining step needs an AWS account, a
 real client or a paid service; the seam is named. **Open** means not yet built.
 
-Last updated: Phase 3 complete, 23 October 2026.
+Last updated: Phase 4 complete, 23 October 2026.
 
 ## AI / ML engineering
 
@@ -41,14 +41,21 @@ Last updated: Phase 3 complete, 23 October 2026.
 | Consent and opt-out, marketing opt-in separate | done | `consent.py`, `marketing.py`, `test_whatsapp_and_marketing.py` |
 | Pinned Python dependencies in SBOM and Trivy | done | `requirements/`, CI `security` job |
 
+## Phase 4 additions
+
+| Item | Status | Evidence |
+|---|---|---|
+| Tool calls recorded in events (name and outcome, no arguments) | done | `pipeline.persist`, `test_pipeline.py::test_every_tool_call_is_recorded_in_the_event_without_its_arguments` |
+| Improper output handling cases (LLM05) in the red-team suite | done | rt41, rt42 in `evals/redteam/cases.yaml` |
+
 ## Machine learning beyond the LLM
 
 | Item | Status | Evidence |
 |---|---|---|
-| Trained handoff/intent classifier compared with rules and LLM | Phase 4 | |
-| Served from Lambda | Phase 4 | |
+| Trained handoff/intent classifier compared with rules and LLM | done (rules vs model, with leakage test); LLM arm is a seam (`compare --llm` needs Bedrock) | `docs/evidence/classifier-comparison.md`, `ml/frontdesk_ml/classifier.py`, `ml/tests/test_classifier_training.py`, MODEL-CARD section 6 |
+| Served from Lambda | done, in shadow mode (logs, never decides) | `agent/classifier.py` (numpy only), `agent/state_machine.py::_shadow`, `backend/tests/test_classifier.py` |
 | Weekly drift on intent mix | Phase 5 | |
-| Model card | started | `docs/MODEL-CARD.md` |
+| Model card | done; Bedrock results are a seam | `docs/MODEL-CARD.md` |
 
 ## Data science
 
@@ -86,7 +93,7 @@ Last updated: Phase 3 complete, 23 October 2026.
 | Detection rules with runbooks, firing in tests | done | `docs/DETECTIONS.md`; `infra/test/detections.test.ts` |
 | OWASP ASVS L2 checklist mapped to code | done | `docs/ASVS.md` |
 | DAST (OWASP ZAP) against dev | workflow done, seam (needs the dev site) | `.github/workflows/zap.yml` |
-| Recorded incident drill | Phase 5 | |
+| Recorded incident drill | done: model-down drill, runs on every PR; AWS run is a seam (SEAM(drill-model-down-aws)); security tabletop Phase 5 | `docs/drills/2026-10-23-model-down.md`, `docs/drills/2026-10-23-model-down.run.md`, `backend/tests/test_drills.py` |
 
 ## DevSecOps
 
@@ -105,13 +112,13 @@ Last updated: Phase 3 complete, 23 October 2026.
 
 | Item | Status | Evidence |
 |---|---|---|
-| OWASP LLM Top 10 and MITRE ATLAS mapping | done for the red-team suite; full control mapping Phase 4 | `evals/redteam/cases.yaml`, eval report rollups |
+| OWASP LLM Top 10 and MITRE ATLAS mapping | done: all ten OWASP risks, twelve ATLAS techniques, checked by a test | `docs/AI-SECURITY.md`, `ml/tests/test_redteam_suite.py::test_ai_security_maps_all_ten_owasp_risks_and_every_tag_the_suite_uses` |
 | Layered defence (input checks, Guardrails, PII, grounding, schema, tool scope) | done; Guardrails is a seam | `agent/policy.py`, `ai-stack.ts`, `llm/guardrails.py`, `llm/validate.py`, `agent/tools.py` |
 | Indirect injection through a poisoned FAQ | done | `retrieval/quarantine.py`, `test_quarantine.py`, red-team rt27 to rt29 |
 | Canary tokens for prompt leakage | done | `llm/prompts.py`, validator, DET-11 |
 | PII redacted before the model and in logs | done (model); logs: Semgrep rule | `redact.py`, `test_redaction.py`, `frontdesk-message-text-in-logs` rule |
 | POPIA deletion reaching transcripts, chunks, embeddings | done | `deletion.py`, `test_inbox_api.py::test_a_deletion_request_previews_then_erases...` |
-| Red-team suite (promptfoo) in CI with attack success rate | done offline; promptfoo export done, release run is a seam | `ml/frontdesk_ml/redteam.py --export-promptfoo` |
+| Red-team suite (promptfoo) in CI with attack success rate | done offline (0 of 42); promptfoo export done, release run is a seam | `ml/frontdesk_ml/redteam.py --export-promptfoo`, `evals/redteam/cases.yaml` |
 
 ## Forward deployed / architecture / consulting
 
