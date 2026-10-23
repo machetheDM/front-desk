@@ -1,21 +1,23 @@
 """Order status adapter (the Phase 6 "one real integration" plugs in here).
 
 The agent only ever sees `OrdersAdapter`. The demo tenant uses `ConfigOrdersAdapter`, which
-reads the made-up orders from tenant config. A client's system is reached by `HttpOrdersAdapter`
-(SEAM(client-order-api): base URL and HMAC secret come from SSM per tenant; nothing calls it
-until a client's API is connected in the pilot).
+reads the made-up orders from tenant config. A client's system is reached by `HttpOrdersAdapter`,
+built by `services.orders_for` when the tenant has an `orders_api` config (base URL in config,
+HMAC secret in SSM SecureString). The contract the client implements is
+docs/engagement/integration-contract.md, and `integrations/conformance.py` checks their sandbox
+against it. SEAM(client-order-api): the remaining step is a real client's API.
 """
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import re
-import time
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
+
+from ..channels.webhook_signature import sign
 
 ORDER_REF = re.compile(r"\b([A-Z]{2,4}-\d{3,6})\b")
 
@@ -52,18 +54,19 @@ class HttpOrdersAdapter:
     """Calls a client's order API with an HMAC-signed request (same scheme as our inbound
     webhooks, frontdesk/channels/webhook_signature.py)."""
 
-    def __init__(self, base_url: str, secret: bytes, timeout: float = 3.0) -> None:
-        if not base_url.startswith("https://"):
+    def __init__(self, base_url: str, secret: bytes, timeout: float = 3.0, *, allow_loopback_http: bool = False) -> None:
+        u = urllib.parse.urlsplit(base_url)
+        loopback = allow_loopback_http and u.scheme == "http" and u.hostname in ("127.0.0.1", "localhost")
+        if u.scheme != "https" and not loopback:
             raise ValueError("client APIs must use HTTPS")
         self.base_url, self.secret, self.timeout = base_url.rstrip("/"), secret, timeout
 
     def status(self, ref: str, *, requester_address: str | None) -> OrderStatus | None:
         body = json.dumps({"ref": ref, "requester": requester_address}).encode()
-        ts = str(int(time.time()))
-        sig = hmac.new(self.secret, ts.encode() + b"." + body, hashlib.sha256).hexdigest()
+        ts, sig = sign(self.secret, body)
         req = urllib.request.Request(f"{self.base_url}/orders/status", data=body, method="POST",
                                      headers={"content-type": "application/json", "x-fd-timestamp": ts, "x-fd-signature": sig})
         # nosemgrep -- see the reason on the next line
-        with urllib.request.urlopen(req, timeout=self.timeout) as r:  # noqa: S310 - https enforced in __init__
+        with urllib.request.urlopen(req, timeout=self.timeout) as r:  # noqa: S310 - https enforced in __init__ (loopback http for tests only)
             data = json.loads(r.read())
         return OrderStatus(ref, data["status"], data.get("detail", "")) if data.get("found") else None

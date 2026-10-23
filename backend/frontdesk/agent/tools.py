@@ -81,7 +81,12 @@ def check_service_area(ctx: ToolContext, a: CheckServiceAreaArgs) -> dict:
 def get_order_status(ctx: ToolContext, a: OrderStatusArgs) -> dict:
     if ctx.orders is None:
         return {"ok": False, "result": "order lookup is not connected for this business"}
-    s = ctx.orders.status(a.order_ref, requester_address=ctx.channel_address)
+    try:
+        s = ctx.orders.status(a.order_ref, requester_address=ctx.channel_address)
+    except Exception as e:  # noqa: BLE001 -- the client's system is outside our control
+        # Their API being down must not become our outage: hand over, and say nothing about the order.
+        return {"ok": False, "result": "order lookup is unavailable right now", "needs": "order_lookup_unavailable",
+                "error": type(e).__name__}
     if s is None:
         # Same answer whether the order does not exist or belongs to someone else: no oracle.
         return {"ok": False, "result": "I can't share order details on this conversation.", "needs": "verification_needed"}

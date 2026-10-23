@@ -121,6 +121,11 @@ export class AppStack extends Stack {
     const deliver = fn('deliver', 'frontdesk.handlers.pipeline.deliver');
     const degrade = fn('degrade', 'frontdesk.handlers.pipeline.degrade');
     this.grantBedrock(answer, props);
+    // Only the order-API secrets (SecureString, AWS managed key): the answer step needs nothing else from SSM.
+    answer.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ssm:GetParameter'],
+      resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/frontdesk/${envName}/orders-api/*`],
+    }));
     this.grantSsmRead(screen, envName);
     this.grantSsmRead(deliver, envName);
     deliver.addToRolePolicy(new iam.PolicyStatement({

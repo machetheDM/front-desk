@@ -8,18 +8,40 @@ import os
 from .agent import classifier
 from .agent.state_machine import Deps
 from .db import Transaction
-from .integrations.orders import ConfigOrdersAdapter
+from .integrations.orders import ConfigOrdersAdapter, HttpOrdersAdapter
 from .llm import metering
 from .retrieval.embedders import BedrockCohereEmbedder, HashingEmbedder
 from .retrieval.rerankers import BedrockCohereReranker, LexicalReranker
 
 
-def orders_for(tx: Transaction):
-    row = tx.one("SELECT value FROM app.tenant_config WHERE key = 'orders_demo'")
-    if row:
-        v = row["value"] if isinstance(row["value"], dict) else json.loads(row["value"])
-        return ConfigOrdersAdapter(v)
-    return None  # SEAM(client-order-api): HttpOrdersAdapter from SSM when a client connects one
+_SECRETS: dict[str, bytes] = {}
+
+
+def _ssm_secret(name: str) -> bytes:
+    """SecureString from SSM, cached for the life of the Lambda container. The value never
+    goes to a log, an event or the database: only the parameter name is stored in config."""
+    if name not in _SECRETS:
+        import boto3
+
+        _SECRETS[name] = boto3.client("ssm").get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"].encode()
+    return _SECRETS[name]
+
+
+def _config(tx: Transaction, key: str) -> dict | None:
+    row = tx.one("SELECT value FROM app.tenant_config WHERE key = :k", {"k": key})
+    if not row:
+        return None
+    return row["value"] if isinstance(row["value"], dict) else json.loads(row["value"])
+
+
+def orders_for(tx: Transaction, secret=_ssm_secret):
+    """The tenant's order lookup: their own API when connected (admin connect-orders-api),
+    the demo's made-up orders for the demo tenant, otherwise none (the tool says so)."""
+    if api := _config(tx, "orders_api"):
+        return HttpOrdersAdapter(api["base_url"], secret(api["secret_parameter"]))
+    if demo := _config(tx, "orders_demo"):
+        return ConfigOrdersAdapter(demo)
+    return None
 
 
 def build(pipeline: str = "offline", *, cap: bool = False) -> Deps:

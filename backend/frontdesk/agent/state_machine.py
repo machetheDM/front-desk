@@ -372,7 +372,7 @@ def disclosure(tenant: dict) -> str:
 
 TOPIC_FOR = {
     "negotiation": "pricing", "unanswerable": None, "booking_commitment": "booking", "refund": "payment",
-    "fault": "fault", "complaint": None, "verification_needed": "order_status", "human_requested": None,
+    "fault": "fault", "complaint": None, "verification_needed": "order_status", "order_lookup_unavailable": "order_status", "human_requested": None,
 }
 
 
@@ -400,6 +400,7 @@ def handoff_reply(reason: str, staff: dict | None, when: str, tenant_name: str) 
         "fault": f"I've flagged this as a fault for {who}, who will reply to you here {when}.",
         "out_of_scope": f"I can only help with questions about {tenant_name}. I've asked {who} to reply in case they can help.",
         "verification_needed": f"I can't share order details on this conversation. I've asked {who} to check and reply {when}.",
+        "order_lookup_unavailable": f"I can't check orders right now. I've asked {who} to check yours and reply {when}.",
         "validation_failed": f"I want to be sure I give you the right answer, so I've asked {who} to reply to you here {when}.",
         "cost_cap": f"A person from {tenant_name} will reply to you here {when}.",
         "model_unavailable": f"A person from {tenant_name} will reply to you here {when}.",
@@ -413,6 +414,7 @@ REASON_TEXT = {
     "unanswerable": "the documents do not answer this", "booking_commitment": "wants a date booked or a visit arranged",
     "refund": "asked for a refund", "complaint": "is unhappy (complaint)", "fault": "reported a system fault",
     "out_of_scope": "asked something outside the business", "verification_needed": "asked about an order the number cannot be matched to",
+    "order_lookup_unavailable": "asked about an order while the order system was unreachable",
     "validation_failed": "the assistant's draft failed checks", "cost_cap": "monthly assistant budget reached",
     "model_unavailable": "the assistant was unavailable (degraded mode)", "operator_paused": "the assistant is paused by the operator", "injection": "message looked like a manipulation attempt",
 }

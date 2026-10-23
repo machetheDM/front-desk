@@ -29,6 +29,16 @@ def semgrep(path: str) -> None:
         print(f"::{level} file={r['path']},line={r['start']['line']},title={esc(r['check_id'].split('.')[-1])}::{esc(r['extra']['message'])}")
 
 
+def jest(path: str) -> None:
+    for suite in json.load(open(path))["testResults"]:
+        for t in suite["assertionResults"]:
+            if t["status"] == "failed":
+                msg = " ".join(t.get("failureMessages") or [])[:600]
+                print(f"::error file={suite['name'].split('/infra/')[-1] if '/infra/' in suite['name'] else suite['name']},title={esc(t['fullName'])}::{esc(msg)}")
+        if suite.get("status") == "failed" and not suite["assertionResults"]:
+            print(f"::error file={suite['name']},title=suite failed to run::{esc(suite.get('message', '')[:600])}")
+
+
 def trivy(path: str) -> None:
     for res in json.load(open(path)).get("Results", []) or []:
         for v in (res.get("Vulnerabilities") or [])[:20]:
@@ -40,4 +50,4 @@ def trivy(path: str) -> None:
 
 
 if __name__ == "__main__":
-    {"junit": junit, "semgrep": semgrep, "trivy": trivy}[sys.argv[1]](sys.argv[2])
+    {"junit": junit, "semgrep": semgrep, "trivy": trivy, "jest": jest}[sys.argv[1]](sys.argv[2])

@@ -86,7 +86,8 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm, cache-dependency-path: infra/package-lock.json }
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: npx jest
+      - name: jest (failures become annotations)
+        run: npx jest --ci --json --outputFile=jest.json || { python3 ../scripts/ci/annotate.py jest jest.json; exit 1; }
       - name: Synthesize every stack (cdk-nag errors fail the synth)
         run: npx cdk synth --quiet -c frontdesk:ci=true -c frontdesk:testing=true
       - name: Install cfn-guard (pinned, checksum verified)

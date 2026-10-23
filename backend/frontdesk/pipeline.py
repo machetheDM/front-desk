@@ -172,9 +172,11 @@ def persist(tx: Transaction, rec: Received, o: Outcome) -> str:
         events.emit(tx, rec.conversation_id, "degraded" if o.action == "degraded" else "handed_over",
                     {**base, "reason": o.handoff_reason, "staff_id": staff["staff_id"] if staff else None,
                      "requests": [r["kind"] for r in o.requests]})
-        if o.action == "degraded":
+        if o.action == "degraded" and o.handoff_reason == "operator_paused":
             # A pause is a decision, not a failure: it must not page anyone as DET-06 or roll back a deploy.
-            telemetry.metric("AssistantPaused" if o.handoff_reason == "operator_paused" else "Degraded")
+            telemetry.metric("AssistantPaused")
+        elif o.action == "degraded":
+            telemetry.metric("Degraded")
     elif o.action == "refused":
         events.emit(tx, rec.conversation_id, "refused", {**base, "reason": o.handoff_reason})
     elif o.action == "opted_out":

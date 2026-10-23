@@ -65,7 +65,7 @@ You should see the status go to "Enabling", then "Enabled" (a few minutes).
 
 1. Open **AWS Organizations** (search bar), **Create an organization**. Keep "All features".
 2. Verify the e-mail AWS sends you.
-3. On the **AWS accounts** page note the **Root** id (`r-xxxx`). Under **Settings** note the **Organization ID** (`o-xxxxxxxxxx`).
+3. On the **AWS accounts** page you can see the **Root** id (`r-xxxx`) and under **Settings** the **Organization ID** (`o-xxxxxxxxxx`). Nothing to copy: step 7 reads both with the AWS CLI.
 4. **Policies**, **Service control policies**, **Enable service control policies**.
 
 You should see: one account (yours) under Root; SCPs "Enabled".
@@ -127,16 +127,24 @@ Each account needs its own e-mail address. With Gmail you can use plus-addressin
 inbox: `<you>+fd-security@gmail.com`, `<you>+fd-logs@gmail.com`, `<you>+fd-dev@gmail.com`,
 `<you>+fd-prod@gmail.com`.
 
+Change the two values on the first lines to your own; everything after them is filled in for
+you. If you open a new PowerShell window later, run these first five lines again.
+
 ```powershell
+$GmailUser = "yourname"      # change this: the part of your Gmail address before @gmail.com
+$MyName = "Your Name"        # change this: how staff and the audit log will name you
+$Me = "$GmailUser@gmail.com"
 $env:AWS_PROFILE = "fd-mgmt"
 $Mgmt = aws sts get-caller-identity --query Account --output text
+$Root = aws organizations list-roots --query "Roots[0].Id" --output text
+$Org = aws organizations describe-organization --query "Organization.Id" --output text
 Set-Location infra
 npx cdk bootstrap "aws://$Mgmt/us-east-1"
 npx cdk deploy FrontDesk-Organization `
-  -c managementAccount=$Mgmt -c alertEmail=<you>@gmail.com `
-  -c rootId=<r-xxxx> -c organizationId=<o-xxxxxxxxxx> `
-  -c emailSecurity=<you>+fd-security@gmail.com -c emailLogArchive=<you>+fd-logs@gmail.com `
-  -c emailDev=<you>+fd-dev@gmail.com -c emailProd=<you>+fd-prod@gmail.com
+  -c managementAccount=$Mgmt -c alertEmail=$Me `
+  -c rootId=$Root -c organizationId=$Org `
+  -c emailSecurity="$GmailUser+fd-security@gmail.com" -c emailLogArchive="$GmailUser+fd-logs@gmail.com" `
+  -c emailDev="$GmailUser+fd-dev@gmail.com" -c emailProd="$GmailUser+fd-prod@gmail.com"
 ```
 
 CDK shows the IAM and SCP changes and asks `Do you wish to deploy these changes (y/n)?`. Read
@@ -145,8 +153,12 @@ them, then `y`. Account creation takes 5 to 15 minutes. You should see four outp
 your private note, and into this session:
 
 ```powershell
-$Security = "<SecurityAccountId>"; $Logs = "<LogArchiveAccountId>"; $Dev = "<DevAccountId>"; $Prod = "<ProdAccountId>"
+function Get-OrgOutput($Key) { aws cloudformation describe-stacks --stack-name FrontDesk-Organization --region us-east-1 --query "Stacks[0].Outputs[?OutputKey=='$Key'].OutputValue" --output text }
+$Security = Get-OrgOutput SecurityAccountId; $Logs = Get-OrgOutput LogArchiveAccountId; $Dev = Get-OrgOutput DevAccountId; $Prod = Get-OrgOutput ProdAccountId
+"$Security $Logs $Dev $Prod"
 ```
+
+You should see four 12-digit account ids.
 
 In the console, **AWS Organizations**: you should see OUs Security (security, log-archive)
 and Workloads > Dev (dev), Workloads > Prod (prod), and six `frontdesk-*` SCPs attached.
@@ -203,7 +215,7 @@ You should see the dev account id.
 
 ```powershell
 $env:AWS_PROFILE = "fd-mgmt"
-npx cdk deploy FrontDesk-Budgets -c managementAccount=$Mgmt -c alertEmail=<you>@gmail.com
+npx cdk deploy FrontDesk-Budgets -c managementAccount=$Mgmt -c alertEmail=$Me
 aws budgets describe-budgets --account-id $Mgmt --query "Budgets[].{name:BudgetName,limit:BudgetLimit.Amount}"
 ```
 
@@ -213,7 +225,7 @@ R18.50). Alerts go to your e-mail at 50%, 80% and 100% actual, and 100% forecast
 ## 12. Organization trail and log archive
 
 ```powershell
-$Ctx = "-c managementAccount=$Mgmt -c logArchiveAccount=$Logs -c organizationId=<o-xxxxxxxxxx> -c alertEmail=<you>@gmail.com".Split(" ")
+$Ctx = "-c managementAccount=$Mgmt -c logArchiveAccount=$Logs -c organizationId=$Org -c alertEmail=$Me".Split(" ")
 npx cdk bootstrap "aws://$Logs/af-south-1" --profile fd-logs
 npx cdk deploy FrontDesk-LogArchive --profile fd-logs @Ctx
 npx cdk deploy FrontDesk-OrgTrail --profile fd-mgmt @Ctx
@@ -230,7 +242,7 @@ Test detection DET-04/DET-01 later by reading `docs/DETECTIONS.md`; do not test 
 ```powershell
 aws organizations register-delegated-administrator --account-id $Security --service-principal access-analyzer.amazonaws.com --profile fd-mgmt
 npx cdk bootstrap "aws://$Security/af-south-1" --profile fd-security
-npx cdk deploy FrontDesk-Security --profile fd-security -c securityAccount=$Security -c managementAccount=$Mgmt -c alertEmail=<you>@gmail.com
+npx cdk deploy FrontDesk-Security --profile fd-security -c securityAccount=$Security -c managementAccount=$Mgmt -c alertEmail=$Me
 ```
 
 Confirm the second SNS e-mail. In the console (security account, af-south-1), **IAM Access
@@ -281,7 +293,7 @@ gh variable set AWS_DEV_DEPLOY_ROLE --body "arn:aws:iam::$($Dev):role/frontdesk-
 gh variable set AWS_PROD_DEPLOY_ROLE --body "arn:aws:iam::$($Prod):role/frontdesk-github-deploy-prod"
 gh variable set AWS_PR_DIFF_ROLE --body "arn:aws:iam::$($Dev):role/frontdesk-github-pr-diff"
 gh variable set AWS_EVALS_ROLE --body "arn:aws:iam::$($Dev):role/frontdesk-github-evals"
-gh variable set ALERT_EMAIL --body "<you>@gmail.com"
+gh variable set ALERT_EMAIL --body $Me
 gh api -X PUT repos/machetheDM/front-desk/environments/dev
 gh api -X PUT repos/machetheDM/front-desk/environments/evals
 gh api -X PUT repos/machetheDM/front-desk/environments/prod -f "reviewers[][type]=User" -F "reviewers[][id]=$(gh api user --jq .id)"
@@ -303,7 +315,7 @@ In GitHub, **Settings**, **Code security**: turn on **Secret scanning** and **Pu
 
 ```powershell
 .\scripts\build-lambda.ps1
-$C = "-c devAccount=$Dev -c alertEmail=<you>@gmail.com".Split(" ")
+$C = "-c devAccount=$Dev -c alertEmail=$Me".Split(" ")
 npx cdk deploy "FrontDesk-dev-*" --profile fd-dev --require-approval broadening @C
 aws lambda invoke --function-name frontdesk-dev-migrate --profile fd-dev --region af-south-1 out.json; Get-Content out.json
 python -m frontdesk.demo_tenant --target aws --profile fd-dev --dry-run
@@ -318,8 +330,8 @@ Create your staff login for the inbox:
 
 ```powershell
 $Pool = aws cloudformation describe-stacks --stack-name FrontDesk-dev-App --profile fd-dev --region af-south-1 --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text
-python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email <you>@gmail.com --name "<Your name>" --role owner --dry-run
-python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email <you>@gmail.com --name "<Your name>" --role owner --write
+python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email $Me --name $MyName --role owner --dry-run
+python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email $Me --name $MyName --role owner --write
 ```
 
 ## 18. WhatsApp number (after Meta verification, or with an unverified portfolio)
@@ -329,8 +341,9 @@ python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant de
 3. Map the number to the demo tenant (SSM, dry run first):
 
 ```powershell
-python -m frontdesk.admin map-whatsapp --profile fd-dev --tenant demo --phone-number-id <phone-number-id-...> --dry-run
-python -m frontdesk.admin map-whatsapp --profile fd-dev --tenant demo --phone-number-id <phone-number-id-...> --write
+$PhoneId = "phone-number-id-0123456789abcdef"   # change this: the id End User Messaging Social shows for the number
+python -m frontdesk.admin map-whatsapp --profile fd-dev --tenant demo --phone-number-id $PhoneId --dry-run
+python -m frontdesk.admin map-whatsapp --profile fd-dev --tenant demo --phone-number-id $PhoneId --write
 ```
 
 Send "Hi" from your own phone to the demo number. You should get the assistant's greeting,
@@ -378,7 +391,7 @@ Run these in order after step 17, with the virtual environment active. Each writ
    reported. About 15 minutes; you answer "correct or not" for each shown answer.
 
    ```powershell
-   python -m frontdesk_ml.label --replay reports/local/replay.jsonl --pipeline offline --labeller "Machethe DM"
+   python -m frontdesk_ml.label --replay reports/local/replay.jsonl --pipeline offline --labeller $MyName
    ```
 
 5. **Model-down drill in AWS**: follow `docs/drills/2026-10-23-model-down.md`, "Run 2". You
