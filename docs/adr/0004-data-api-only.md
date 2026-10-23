@@ -27,3 +27,14 @@ stays in SSM SecureString.
   small text, which fits.
 - If scale-to-zero is unavailable in af-south-1, dev pauses the cluster between sessions
   (`scripts/db-pause.ps1`).
+
+## Addendum (23 October 2026): waking a paused cluster
+
+Scale-to-zero has a cost the original decision did not spell out: when the cluster has paused,
+the first Data API call fails with `DatabaseResumingException` while it wakes, typically in
+about 15 seconds. Unhandled, the first customer message after a quiet night fails (the web chat
+shows an error; WhatsApp falls back on retries). `db/dataapi.call_resuming` now waits 1, 2, 4,
+8 and 8 seconds (23 s in all, inside API Gateway's 29 s limit) on that error only, for the first
+call of each transaction and for the migration runner; any other error is raised at once
+(`backend/tests/test_data_api.py`). Customers who arrive while the database is waking wait a few
+seconds longer for their first answer; that is the price of a database that costs nothing idle.

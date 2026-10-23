@@ -110,16 +110,32 @@ aws iam get-account-summary --profile fd-mgmt --query "SummaryMap.AccountAccessK
 
 You should see your management account id with an `AWSReservedSSO_FrontDeskAdmin_...` role, and `0` for root access keys.
 
-## 6. Let Organizations work with CloudTrail and Access Analyzer
+From here on, after any step, check everything so far against this guide (read-only; it
+changes nothing). In the repository folder, with the virtual environment active:
+
+```powershell
+python -m frontdesk.deploy_check --mgmt fd-mgmt
+```
+
+You should see PASS for steps 1 to 5, then TODO for the steps you have not done yet, and a
+last line `Next: DEPLOY.md step 6 (...)`. A FAIL line says what is wrong and which step to redo.
+If it says your SSO sign-in has expired, run `aws sso login --profile fd-mgmt` and try again.
+
+## 6. Let Organizations work with CloudTrail, Access Analyzer and Account Management
+
+Account Management is what lets step 8 turn on Cape Town in the new accounts from here; without
+it, `aws account enable-region --account-id ...` is refused.
 
 ```powershell
 $env:AWS_PROFILE = "fd-mgmt"
 aws organizations enable-aws-service-access --service-principal cloudtrail.amazonaws.com
 aws organizations enable-aws-service-access --service-principal access-analyzer.amazonaws.com
+aws organizations enable-aws-service-access --service-principal account.amazonaws.com
 aws organizations list-aws-service-access-for-organization --query "EnabledServicePrincipals[].ServicePrincipal"
 ```
 
-You should see `cloudtrail.amazonaws.com`, `access-analyzer.amazonaws.com` and `sso.amazonaws.com` in the list.
+You should see `account.amazonaws.com`, `cloudtrail.amazonaws.com`, `access-analyzer.amazonaws.com`
+and `sso.amazonaws.com` in the list.
 
 ## 7. Create the member accounts and SCPs (CDK, management account)
 
@@ -209,7 +225,13 @@ aws configure sso --profile fd-prod-ro    # prod account, FrontDeskReadOnly, af-
 aws sts get-caller-identity --profile fd-dev
 ```
 
-You should see the dev account id.
+You should see the dev account id. From now on, give the checker every profile:
+
+```powershell
+python -m frontdesk.deploy_check --mgmt fd-mgmt --security fd-security --logs fd-logs --dev fd-dev --prod fd-prod-ro
+```
+
+Step 10's lines catch the most common mistake here: a profile that points at the wrong account.
 
 ## 11. Budgets alarms (management account)
 
@@ -270,6 +292,14 @@ Haiku 5.5, Claude Sonnet 5.5, Cohere Embed Multilingual, Cohere Rerank 3.5 and T
 Embeddings V2 show "Access granted", nothing to do. Anthropic models ask for a one-time use
 case form: describe "customer-service assistant for South African small businesses, grounded
 in company documents".
+
+To prove access without opening the console (one five-token request, well under one cent):
+
+```powershell
+python -m frontdesk.deploy_check --mgmt fd-mgmt --dev fd-dev --bedrock
+```
+
+The step 15 line should say PASS.
 
 ## 16. GitHub: OIDC roles, environments, branch protection
 
@@ -333,6 +363,16 @@ $Pool = aws cloudformation describe-stacks --stack-name FrontDesk-dev-App --prof
 python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email $Me --name $MyName --role owner --dry-run
 python -m frontdesk.admin create-staff --profile fd-dev --pool $Pool --tenant demo --email $Me --name $MyName --role owner --write
 ```
+
+Check the whole of dev, including the database (this wakes Aurora for about a minute):
+
+```powershell
+python -m frontdesk.deploy_check --mgmt fd-mgmt --security fd-security --logs fd-logs --dev fd-dev --database
+```
+
+Every step 17 line should say PASS: the six stacks, the inbox served with its security headers,
+and the database checks (every migration applied, forced row-level security on every table,
+the append-only triggers, the app role's limits, the demo tenant's documents present).
 
 ## 18. WhatsApp number (after Meta verification, or with an unverified portfolio)
 

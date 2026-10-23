@@ -60,7 +60,7 @@ No high-risk issue is open. The accepted MRIs are each tied to "first paying cli
 | Service quotas | Bedrock on-demand quotas in eu-central-1 not yet checked for the pilot's peak (about 3 messages a minute) | open | Check in Service Quotas after DEPLOY.md step 14; owner Machethe DM |
 | Workload architecture | Step Functions Express with a Catch on every answer; ids-only payloads; idempotent intake by message id | closed | `stacks.test.ts` Catch test, `test_pipeline.py` duplicate test |
 | Withstand component failure | Model down means "a person will reply" and the inbox keeps working | closed | `docs/drills/2026-10-23-model-down.md` |
-| Adapt to demand | Serverless throughout; Aurora 0 to 2 ACU (4 in prod) | closed | `data-stack.ts` |
+| Adapt to demand | Serverless throughout; Aurora 0 to 2 ACU (4 in prod); the first call after a pause waits for the cluster to wake instead of failing | closed | `data-stack.ts`, `db/dataapi.call_resuming`, ADR 0004 addendum |
 | Back up and restore | Continuous backup (7 days dev, 14 prod); restore check proves protections survive | MRI open | Local drill done; the AWS point-in-time restore with measured RTO is SEAM(restore-drill-aws) |
 | Fault isolation | One Region for data; Aurora storage is replicated across three AZs, but there is a single Serverless v2 writer and no reader, so a writer failure means minutes to replace it | MRI accepted | Within the 2-hour RTO target for a pilot; add a reader (doubles the database floor cost) when a client's SLA needs it |
 | Test reliability | Drills in CI; canary deploys | closed | `test_drills.py`, `test_restore.py` |

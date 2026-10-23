@@ -70,6 +70,14 @@ Last updated: Phase 6 complete as far as it can go without a client, 23 October 
 | Shadow classifier agreement for the operator, weekly | done | `insights.shadow_agreement`, `handlers/ops.drift`, `test_classifier.py` |
 | 30 days live with a client and a published case study | needs a client | `docs/engagement/pilot-charter.md`, `case-study-template.md` |
 
+## Deploy readiness (after Phase 6)
+
+| Item | Status | Evidence |
+|---|---|---|
+| A read-only checker for every DEPLOY.md step, run against the real account | done; first real run is the owner's | `backend/frontdesk/deploy_check.py`, `backend/tests/test_deploy_check.py` (botocore Stubber validates every response shape) |
+| DEPLOY.md step 6 enables Account Management trusted access, which step 8 needs | done (step 8 would have been refused without it) | `docs/DEPLOY.md` step 6, `deploy_check.step6` |
+| First message after Aurora pauses is waited for, not failed | done | `db/dataapi.call_resuming`, `test_data_api.py`, ADR 0004 addendum |
+
 ## Machine learning beyond the LLM
 
 | Item | Status | Evidence |

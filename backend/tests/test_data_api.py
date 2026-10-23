@@ -75,3 +75,62 @@ def test_a_malformed_tenant_id_is_refused_before_any_call():
     with pytest.raises(ValueError):
         with db.transaction("'; DROP TABLE x; --"):
             pass
+
+
+class Resuming(Exception):
+    """The shape of botocore's ClientError for a paused Aurora Serverless v2 cluster."""
+
+    response = {"Error": {"Code": "DatabaseResumingException", "Message": "The Aurora DB instance is resuming"}}
+
+
+class PausedRdsData(FakeRdsData):
+    def __init__(self, wakes_after: int):
+        super().__init__()
+        self.wakes_after = wakes_after
+
+    def begin_transaction(self, **kw):
+        if self.wakes_after > 0:
+            self.wakes_after -= 1
+            raise Resuming()
+        return super().begin_transaction(**kw)
+
+
+def test_a_paused_database_is_waited_for_instead_of_failing_the_first_message(monkeypatch):
+    from frontdesk.db import dataapi
+
+    slept = []
+    monkeypatch.setattr(dataapi, "_sleep", slept.append)
+    db = DataApiDatabase("arn:cluster", "arn:secret", "frontdesk", client=PausedRdsData(wakes_after=3))
+    with db.transaction(uuid.uuid4()) as tx:
+        assert tx.execute("SELECT 1 AS n") == [{"n": 1}]
+    assert slept == [1, 2, 4]
+
+
+def test_waiting_for_a_resume_stops_inside_the_api_gateway_time_limit(monkeypatch):
+    from frontdesk.db import dataapi
+
+    slept = []
+    monkeypatch.setattr(dataapi, "_sleep", slept.append)
+    db = DataApiDatabase("arn:cluster", "arn:secret", "frontdesk", client=PausedRdsData(wakes_after=99))
+    with pytest.raises(Resuming):
+        with db.transaction(uuid.uuid4()):
+            pass
+    assert sum(slept) < 29
+
+
+def test_other_errors_are_not_retried(monkeypatch):
+    from frontdesk.db import dataapi
+
+    class Denied(Exception):
+        response = {"Error": {"Code": "AccessDeniedException"}}
+
+    class DeniedRdsData(FakeRdsData):
+        def begin_transaction(self, **kw):
+            raise Denied()
+
+    slept = []
+    monkeypatch.setattr(dataapi, "_sleep", slept.append)
+    with pytest.raises(Denied):
+        with DataApiDatabase("arn:cluster", "arn:secret", "frontdesk", client=DeniedRdsData()).transaction(uuid.uuid4()):
+            pass
+    assert slept == []

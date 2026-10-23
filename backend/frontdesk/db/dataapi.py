@@ -10,11 +10,31 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from .base import Database, Transaction
+
+# Aurora Serverless v2 at 0 ACU pauses when idle (ADR 0004), and the first Data API call then
+# fails with DatabaseResumingException while it wakes, typically in about 15 seconds. Without
+# waiting, the first customer message after a quiet night fails: the web chat shows an error
+# and WhatsApp relies on retries. The waits add up to 23 s, inside API Gateway's 29 s limit.
+RESUME_WAITS_S = (1, 2, 4, 8, 8)
+_sleep = time.sleep
+
+
+def call_resuming(fn: Callable[..., Any], **kwargs: Any) -> Any:
+    for wait in (*RESUME_WAITS_S, None):
+        try:
+            return fn(**kwargs)
+        except Exception as e:  # botocore's ClientError, matched by code so tests need no botocore stubs
+            code = getattr(e, "response", {}).get("Error", {}).get("Code")
+            if code != "DatabaseResumingException" or wait is None:
+                raise
+            _sleep(wait)
+    raise AssertionError("unreachable")
 
 
 def to_sql_parameters(params: Mapping[str, Any] | None) -> list[dict[str, Any]]:
@@ -75,9 +95,9 @@ class DataApiDatabase(Database):
         self.database = database
 
     def _begin(self) -> Transaction:
-        resp = self.client.begin_transaction(
-            resourceArn=self.cluster_arn, secretArn=self.secret_arn, database=self.database
-        )
+        # Only the first call of a transaction can meet a paused cluster: once it has begun, it is awake.
+        resp = call_resuming(self.client.begin_transaction,
+                             resourceArn=self.cluster_arn, secretArn=self.secret_arn, database=self.database)
         return _DataApiTx(self, resp["transactionId"])
 
     def _commit(self, tx: Transaction) -> None:

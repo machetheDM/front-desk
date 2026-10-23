@@ -44,6 +44,10 @@ def orders_for(tx: Transaction, secret=_ssm_secret):
     return None
 
 
+# The EU cross-Region inference profile (ADR 0002); infra/lib/build-app.ts sets the same default.
+DEFAULT_MODEL_SMALL = "eu.anthropic.claude-haiku-5-5"
+
+
 def build(pipeline: str = "offline", *, cap: bool = False) -> Deps:
     if pipeline == "offline":
         from .llm.offline import ExtractiveAnswerer
@@ -56,7 +60,7 @@ def build(pipeline: str = "offline", *, cap: bool = False) -> Deps:
 
         region = os.environ.get("FRONTDESK_AI_REGION", "eu-central-1")
         return Deps(
-            model=BedrockClaude(os.environ.get("FRONTDESK_MODEL_SMALL", "eu.anthropic.claude-haiku-5-5"),
+            model=BedrockClaude(os.environ.get("FRONTDESK_MODEL_SMALL", DEFAULT_MODEL_SMALL),
                                 os.environ.get("FRONTDESK_MODEL_LARGE", "eu.anthropic.claude-sonnet-5-5"), region=region),
             embedder=BedrockCohereEmbedder(region=region),
             reranker=BedrockCohereReranker(region=region),

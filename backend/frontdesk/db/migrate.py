@@ -91,7 +91,7 @@ def local_runner(dsn: str):
 def data_api_runner(cluster_arn: str, secret_arn: str, database: str, client: Any = None):
     import json
 
-    from .dataapi import to_sql_parameters
+    from .dataapi import call_resuming, to_sql_parameters
 
     if client is None:
         import boto3
@@ -100,7 +100,7 @@ def data_api_runner(cluster_arn: str, secret_arn: str, database: str, client: An
     common = dict(resourceArn=cluster_arn, secretArn=secret_arn)
 
     def run_tx(stmts):
-        tx = client.begin_transaction(database=database, **common)["transactionId"]
+        tx = call_resuming(client.begin_transaction, database=database, **common)["transactionId"]
         out = []
         try:
             for sql, params in stmts:
@@ -114,8 +114,8 @@ def data_api_runner(cluster_arn: str, secret_arn: str, database: str, client: An
         return out
 
     def query(sql, params):
-        r = client.execute_statement(database=database, sql=sql, parameters=to_sql_parameters(params),
-                                     formatRecordsAs="JSON", **common)
+        r = call_resuming(client.execute_statement, database=database, sql=sql, parameters=to_sql_parameters(params),
+                          formatRecordsAs="JSON", **common)
         return json.loads(r.get("formattedRecords") or "[]")
 
     return run_tx, query
