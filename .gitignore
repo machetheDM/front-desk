@@ -19,3 +19,4 @@ reports/
 apps/inbox/out/
 apps/inbox/next-env.d.ts.bak
 build/
+tools/pricing/.cache/

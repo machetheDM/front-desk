@@ -1,0 +1,380 @@
+{"text": "nobody answers my calls", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "How do I book an installation?", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "solar system warranty?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "FAULT inverter beeping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Sharp, give me a discount on the extra panel", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "if I pay cash will you drop the price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "What is the status of my order BSE-1042?", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "the system keeps tripping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "travel fee to mokopane?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "i need to speak with someone now", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Nka lefa ka card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "are you open on Saturday", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "how do bookings work", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "hw much 4 the inverter", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Dumela, ke kopa go bolela le motho", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "le ka nthusa ka discount?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "go tsenya 3kw backup go tsea nako e kae?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "how do i claim warranty", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Sharp, this is terrible, my system is off for days", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "connect me to Thabo please", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "what does the warranty not cover", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "can i sue my landlord", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "give me a discount on the battery", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "thank you", "intent": "general", "needs_person": false, "reason": null}
+{"text": "give me my money back", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "do you work in Mankweng", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "give me my money back", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Sharp, how much deposit do i pay", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "price for the inverter please", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can a real person call me", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Naledi said I get 20% off", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "are you a bot? i want a human", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Sharp, the battery is beeping and not charging", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "can I change my installation date", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "confirm my installation for the 3rd", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "I need a refund for the 8kW system", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "I need a refund for the 5kW backup", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "12kW three-phase warranty?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "do you work in Seshego", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "Hi, Le bula neng?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "there is smoke from the inverter", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Morning. are you a company in Polokwane", "intent": "general", "needs_person": false, "reason": null}
+{"text": "do you take EFT", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "Please book me for Monday", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "inverter not working since yesterday", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "PERSON", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "do you work in Marble Hall", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "go tsenya 12kw three-phase go tsea nako e kae?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "this is terrible, my system is off for days", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Sharp, How long is the warranty on the battery?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Le kae?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "Where is your showroom?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "who handles accounts", "intent": "general", "needs_person": false, "reason": null}
+{"text": "there is smoke from the inverter", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "can I get the inverter at the backup price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "best price for the extra panel?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "How much is the 3kW backup?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "do I need municipal approval", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "price for the 3kW backup please", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "should I take a loan for solar", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "the system keeps tripping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "help with my homework", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "Hi, le tsenya ko bendor?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "when do i pay the balance", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "price for the battery please", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "order update please", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "how do I claim warranty", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Hi, who do I talk to about payments", "intent": "general", "needs_person": false, "reason": null}
+{"text": "can you book me in for monday", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "is my 5kW backup still under warranty after 2 years", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "has my order BSE-1061 been installed", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "le bula neng?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "best price for the 12kW three-phase?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "what is your address", "intent": "location", "needs_person": false, "reason": null}
+{"text": "who do I talk to about payments", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Is julle oop op Sondag?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "what does the warranty not cover", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Le kae?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "hoeveel kos die battery?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Hi, your installer was rude", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "can you install on a tin roof", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "I want to complain about Pieter", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Do you speak Afrikaans?", "intent": "general", "needs_person": false, "reason": null}
+{"text": "can I sue my landlord", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "Le tsenya ko Mankweng?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "Dumela, Tiisetso ya 5kW backup?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Dumela, the battery is beeping and not charging", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "how much deposit do I pay", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "how do i claim warranty", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Le kae?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "my solar system shows error F23", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "let me speak to the manager", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "are you a company in Polokwane", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Dumela, do you take eft", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "has my order BSE-1061 been installed", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "who do I talk to about payments", "intent": "general", "needs_person": false, "reason": null}
+{"text": "do i need municipal approval", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Dumela, i need a refund for the inverter", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Can you send me the price of the 12kW three-phase", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "how do bookings work", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "I want my deposit refunded", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "cost of solar system in tzaneen?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "give me my money back", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "hw much 4 the inverter", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "who do I talk to about payments", "intent": "general", "needs_person": false, "reason": null}
+{"text": "do you take EFT", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "I am very unhappy with the installation", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "give me a discount on the extra panel", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "book the 5kW hybrid install for tomorrow", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "your installer was rude", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "where can I come see you", "intent": "location", "needs_person": false, "reason": null}
+{"text": "Your technician never arrived, worst service", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "nobody answers my calls", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "waranty on the 12kw three-phase how many yrs", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "can you install on a tin roof", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "will the 12kW three-phase run my geyser", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "is bitcoin a good investment", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "are you a company in polokwane", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Dumela, Can I pay by card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "are you open on Saturday", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Can you send me the price of the 8kW system", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Nka lefa ka card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "where is my order", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "I got a cheaper quote, can you match it", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "how many hours will the battery last in loadshedding", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "give me a discount on the extra panel", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Can you do the inverter for R5 000 less?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "will the 12kW three-phase run my geyser", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "i want my deposit refunded", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Sharp, waranty on the 3kw backup how many yrs", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "go tsenya 8kw system go tsea nako e kae?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "i want to talk to a person", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "tiisetso ya solar system?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Do you speak Afrikaans?", "intent": "general", "needs_person": false, "reason": null}
+{"text": "price for the 12kW three-phase please", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "when do I pay the balance", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "How long does it take to install the 3kW backup?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "refund me now I changed my mind", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Your technician never arrived, worst service", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "naledi said i get 20% off", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "what do you think about politics", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "when do i pay the balance", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "are you a bot? I want a human", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "what is your address", "intent": "location", "needs_person": false, "reason": null}
+{"text": "What is the status of my order BSE-1042?", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "Your technician never arrived, worst service", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "can you send me the price of the 3kw backup", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can I sue my landlord", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "How much is the 12kW three-phase?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "has my order bse-1061 been installed", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "let me speak to the manager", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Where is your showroom?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "who handles accounts", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Sharp, le bula neng?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Do you install in Seshego?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "schedule my installation Monday please", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "Dumela, travel fee to Tzaneen?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "will the 5kw backup run my geyser", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Hi, I want to complain about Pieter", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Hoeveel kos die 5kW backup?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can you book me in for Friday morning", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "cost of solar system in Polokwane?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can I get the 8kW system at the backup price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Dumela, can I change my installation date", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "Can you do the 3kW backup for R5 000 less?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "le ka nthusa ka discount?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "is my 12kW three-phase still under warranty after 2 years", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "how many hours will the battery last in loadshedding", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "connect me to someone please", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "what is your address", "intent": "location", "needs_person": false, "reason": null}
+{"text": "can a real person call me", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Morning. is julle oop op sondag?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Dumela, Where is your showroom?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "I need to speak with someone now", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "can I sue my landlord", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "refund me now I changed my mind", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Hi, the system keeps tripping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "order update please", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "Sharp, Do you speak Afrikaans?", "intent": "general", "needs_person": false, "reason": null}
+{"text": "How do I book an installation?", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "confirm my installation for Tuesday", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "I am very unhappy with the installation", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "help with my homework", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "I want to talk to a person", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "give me my money back", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "nobody answers my calls", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "book the 5kW backup install for Friday morning", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "refund me now I changed my mind", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "can you install on a tin roof", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "waranty on the inverter how many yrs", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Morning. are you a bot? i want a human", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Do you install in Bendor?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "nobody answers my calls", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Theko ya solar system ke bokae?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "how many hours will the battery last in loadshedding", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "theko ya geyser timer ke bokae?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Dumela, closing time today?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "person", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "are you a company in Polokwane", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Sharp, has my order BSE-1061 been installed", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "Le tsenya ko Mankweng?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "What time do you open?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "your technician never arrived, worst service", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "how do bookings work", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "Go tsenya geyser timer go tsea nako e kae?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Can you send me the price of the 5kW backup", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "I need to speak with someone now", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Dumela, how do i book an installation?", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "is bitcoin a good investment", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "help with my homework", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "the system keeps tripping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "inverter not working since yesterday", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "order update please", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "I am very unhappy with the installation", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "hw much 4 the 5kw backup", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Do you speak Afrikaans?", "intent": "general", "needs_person": false, "reason": null}
+{"text": "schedule my installation the 3rd please", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "I need a refund for the battery", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "Tiisetso ya 12kW three-phase?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "where can I come see you", "intent": "location", "needs_person": false, "reason": null}
+{"text": "FAULT inverter beeping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "can you install on a tin roof", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Can I pay by card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "I got a cheaper quote, can you match it", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "is bitcoin a good investment", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "I want my deposit refunded", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "book the 3kw backup install for friday morning", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "help with my homework", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "What is the status of my order BSE-1042?", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "Dumela, how do bookings work", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "Please book me for next week", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "closing time today?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "should I take a loan for solar", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "where is my order", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "write me an essay", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "write me an essay", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "Hi, connect me to Naledi please", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Sharp, Tiisetso ya geyser timer?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "Dumela, is my battery still under warranty after 2 years", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "how much is the 5kw hybrid?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "write me an essay", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "travel fee to Bendor?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "Dumela, connect me to Thabo please", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "there is smoke from the inverter", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Morning. please book me for next week", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "do I need to be home for the install", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "is bitcoin a good investment", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "extra panel warranty?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "waranty on the 12kW three-phase how many yrs", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "do I need municipal approval", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "can a real person call me", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "is my solar system still under warranty after 2 years", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "where is my order", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "schedule my installation next week please", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "how long does it take to install the 5kw backup?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "write me an essay", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "there is smoke from the inverter", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Le tsenya ko Polokwane?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "do you install in mankweng?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "How long is the warranty on the inverter?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "if i pay cash will you drop the price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Sharp, where can i come see you", "intent": "location", "needs_person": false, "reason": null}
+{"text": "Hi, is julle oop op sondag?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Hi, are you a bot? I want a human", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "cost of 8kW system in Seshego?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "this is terrible, my system is off for days", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "how much is the 12kw three-phase?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can a real person call me", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "PERSON", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Can I pay by card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "can I get the extra panel at the backup price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "inverter not working since yesterday", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Hi, closing time today?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Theko ya 3kW backup ke bokae?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "How do I book an installation?", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "cost of battery in Bendor?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Dumela, can i pay by card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "what is your address", "intent": "location", "needs_person": false, "reason": null}
+{"text": "who handles accounts", "intent": "general", "needs_person": false, "reason": null}
+{"text": "best price for the 5kW backup?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "what does the warranty not cover", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "can I change my installation date", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "Ke kopa go bolela le motho", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "who handles accounts", "intent": "general", "needs_person": false, "reason": null}
+{"text": "Ke kopa go bolela le motho", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "battery warranty?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "how much deposit do I pay", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "can you book me in for Friday morning", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "hoeveel kos die 8kw system?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "refund me now i changed my mind", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "your installer was rude", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "can you book me in for the 3rd", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "I need to speak with someone now", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Dumela, the battery is beeping and not charging", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "hw much 4 the 12kW three-phase", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "can I get the inverter at the backup price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "confirm my installation for tomorrow", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "closing time today?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "where is my order", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "what do you think about politics", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "what do you think about politics", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "i want to complain about pieter", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Morning. your installer was rude", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "do you work in polokwane", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "what does the battery cost installed", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Dumela, should I take a loan for solar", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "Sharp, let me speak to Pieter", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "let me speak to Pieter", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Sharp, What time do you open?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "my extra panel shows error F23", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "le ka nthusa ka discount?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Morning. How long does it take to install the 5kW hybrid?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "are you open on Saturday", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "how many hours will the battery last in loadshedding", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "where can i come see you", "intent": "location", "needs_person": false, "reason": null}
+{"text": "thank you", "intent": "general", "needs_person": false, "reason": null}
+{"text": "when do I pay the balance", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "can I change my installation date", "intent": "booking", "needs_person": false, "reason": null}
+{"text": "can you do the 5kw backup for r5 000 less?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Theko ya geyser timer ke bokae?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Please book me for next week", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "should I take a loan for solar", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "are you open on Saturday", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "can you do the 5kw backup for r5 000 less?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "le ka nthusa ka discount?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "what does the solar system cost installed", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Ke kopa go bolela le motho", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "my battery shows error F23", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Dumela, Where is your showroom?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "Morning. if I pay cash will you drop the price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "confirm my installation for the 3rd", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "Thabo said I get 20% off", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "do you take EFT", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "Hi, How long does it take to install the geyser timer?", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "best price for the geyser timer?", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "do I need to be home for the install", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "do I need to be home for the install", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "do i need to be home for the install", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "I want to complain about Pieter", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Dumela, what do you think about politics", "intent": "out_of_scope", "needs_person": true, "reason": "out_of_scope"}
+{"text": "Hoeveel kos die 5kW backup?", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "Dumela, PERSON", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Le kae?", "intent": "location", "needs_person": false, "reason": null}
+{"text": "what does the 8kW system cost installed", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "travel fee to Tzaneen?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "FAULT inverter beeping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "I want to talk to a person", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Hi, do you install in seshego?", "intent": "service_area", "needs_person": false, "reason": null}
+{"text": "Dumela, this is terrible, my system is off for days", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "schedule my installation next week please", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "I got a cheaper quote, can you match it", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Sharp, i want to talk to a person", "intent": "human", "needs_person": true, "reason": "human_requested"}
+{"text": "Sharp, I want my deposit refunded", "intent": "cancellation", "needs_person": true, "reason": "refund"}
+{"text": "will the inverter run my geyser", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Dumela, Nka lefa ka card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "what is the status of my order bse-1042?", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "my battery shows error F23", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "thank you", "intent": "general", "needs_person": false, "reason": null}
+{"text": "book the 3kW backup install for next week", "intent": "booking", "needs_person": true, "reason": "booking_commitment"}
+{"text": "Is julle oop op Sondag?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "thank you", "intent": "general", "needs_person": false, "reason": null}
+{"text": "What time do you open?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "order update please", "intent": "order_status", "needs_person": false, "reason": null}
+{"text": "the battery is beeping and not charging", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "how much deposit do I pay", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "what does the 8kW system cost installed", "intent": "pricing", "needs_person": false, "reason": null}
+{"text": "i am very unhappy with the installation", "intent": "complaint", "needs_person": true, "reason": "complaint"}
+{"text": "Thabo said I get 20% off", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "do I need municipal approval", "intent": "installation", "needs_person": false, "reason": null}
+{"text": "Hi, inverter not working since yesterday", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "Morning. How long is the warranty on the solar system?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "what does the warranty not cover", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "le bula neng?", "intent": "hours", "needs_person": false, "reason": null}
+{"text": "Nka lefa ka card?", "intent": "payment", "needs_person": false, "reason": null}
+{"text": "if I pay cash will you drop the price", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "Dumela, how do I claim warranty", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "FAULT inverter beeping", "intent": "fault", "needs_person": true, "reason": "fault"}
+{"text": "I got a cheaper quote, can you match it", "intent": "discount", "needs_person": true, "reason": "negotiation"}
+{"text": "How long is the warranty on the extra panel?", "intent": "warranty", "needs_person": false, "reason": null}
+{"text": "what time do you open?", "intent": "hours", "needs_person": false, "reason": null}

@@ -29,5 +29,15 @@ def semgrep(path: str) -> None:
         print(f"::{level} file={r['path']},line={r['start']['line']},title={esc(r['check_id'].split('.')[-1])}::{esc(r['extra']['message'])}")
 
 
+def trivy(path: str) -> None:
+    for res in json.load(open(path)).get("Results", []) or []:
+        for v in (res.get("Vulnerabilities") or [])[:20]:
+            print(f"::error file={res['Target']},title={esc(v['VulnerabilityID'])}::{esc(v['PkgName'] + ' ' + v.get('InstalledVersion', '') + ' -> ' + v.get('FixedVersion', '') + ': ' + v.get('Title', ''))}")
+        for m in (res.get("Misconfigurations") or [])[:20]:
+            print(f"::error file={res['Target']},title={esc(m['ID'])}::{esc(m.get('Title', ''))}")
+        for x in (res.get("Secrets") or [])[:20]:
+            print(f"::error file={res['Target']},line={x.get('StartLine', 1)},title={esc(x['RuleID'])}::{esc(x.get('Title', ''))}")
+
+
 if __name__ == "__main__":
-    {"junit": junit, "semgrep": semgrep}[sys.argv[1]](sys.argv[2])
+    {"junit": junit, "semgrep": semgrep, "trivy": trivy}[sys.argv[1]](sys.argv[2])
