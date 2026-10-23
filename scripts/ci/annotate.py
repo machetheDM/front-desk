@@ -1,0 +1,33 @@
+"""Turn test and scanner output into GitHub annotations (::error lines), so a failure shows the
+test or finding itself in the pull request, not just "exit code 1".
+
+    python scripts/ci/annotate.py junit report.xml
+    python scripts/ci/annotate.py semgrep semgrep.json
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import xml.etree.ElementTree as ET  # nosemgrep -- (parses our own pytest output)
+
+
+def esc(s: str) -> str:
+    return s.replace("%", "%25").replace("\r", "").replace("\n", "%0A")[:900]
+
+
+def junit(path: str) -> None:
+    for case in ET.parse(path).getroot().iter("testcase"):  # nosemgrep -- our own pytest output, not untrusted XML
+        for bad in list(case.findall("failure")) + list(case.findall("error")):
+            name = f"{case.get('classname')}.{case.get('name')}"
+            print(f"::error file={case.get('file') or 'backend/tests'},title={esc(name)}::{esc((bad.get('message') or '') + ' ' + (bad.text or '')[-600:])}")
+
+
+def semgrep(path: str) -> None:
+    for r in json.load(open(path)).get("results", [])[:40]:
+        level = "error" if r["extra"]["severity"] == "ERROR" else "warning"
+        print(f"::{level} file={r['path']},line={r['start']['line']},title={esc(r['check_id'].split('.')[-1])}::{esc(r['extra']['message'])}")
+
+
+if __name__ == "__main__":
+    {"junit": junit, "semgrep": semgrep}[sys.argv[1]](sys.argv[2])

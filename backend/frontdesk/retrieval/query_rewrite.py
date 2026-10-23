@@ -10,7 +10,7 @@ but cannot erase what the customer asked.
 from __future__ import annotations
 
 import functools
-import importlib.resources
+import pathlib
 import re
 from dataclasses import dataclass
 
@@ -22,7 +22,7 @@ _POWER = re.compile(r"(\d+(?:[.,]\d+)?)\s*(kw|kwh|kva|w|v|a)\b", re.I)
 
 @functools.cache
 def glossary() -> dict:
-    text = importlib.resources.files("frontdesk").joinpath("data/glossary.yaml").read_text()
+    text = (pathlib.Path(__file__).resolve().parents[1] / "data" / "glossary.yaml").read_text(encoding="utf-8")
     data = yaml.safe_load(text)
     return {"phrases": data.get("phrases", {}), "words": data.get("words", {})}
 

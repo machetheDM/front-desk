@@ -19,12 +19,18 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ vars.AWS_DEV_DEPLOY_ROLE != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
+    # workflow_run's branch filter matches a branch *name*, which a fork's pull request can also
+    # be called; deploy only CI runs that came from a push to this repository.
+    if: >-
+      ${{ vars.AWS_DEV_DEPLOY_ROLE != '' && (github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)) }}
     runs-on: ubuntu-24.04
     environment: dev
     steps:
+      # nosemgrep -- see the reason on the next line
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { ref: "${{ github.event.workflow_run.head_sha || github.sha }}" }
+        with: { ref: "${{ github.event.workflow_run.head_sha || github.sha }}" }  # same-repo push only, see the if above
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "3.13" }
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

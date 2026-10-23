@@ -1,4 +1,5 @@
-"""Verify an Amazon SNS message signature (SignatureVersion 1 = SHA1, 2 = SHA256).
+"""Verify an Amazon SNS message signature. Only SignatureVersion 2 (SHA-256) is accepted:
+our topics are configured for it (app-stack.ts), and version 1 uses SHA-1.
 
 When SNS invokes Lambda directly, IAM already restricts who can publish. We verify anyway: a
 misconfigured topic policy, or a future HTTPS subscription, would otherwise accept forged
@@ -39,7 +40,8 @@ def string_to_sign(msg: dict) -> bytes:
 
 @functools.lru_cache(maxsize=8)
 def _fetch_cert(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=3) as r:  # noqa: S310 - host checked by caller
+    # nosemgrep -- see the reason on the next line
+    with urllib.request.urlopen(url, timeout=3) as r:  # noqa: S310 - https and SNS host checked in verify()
         return r.read()
 
 
@@ -54,9 +56,9 @@ def verify(msg: dict, fetch=_fetch_cert, expected_topic_arn: str | None = None) 
         raise SignatureError("signing certificate is not from an SNS host")
     if expected_topic_arn and msg.get("TopicArn") != expected_topic_arn:
         raise SignatureError("message is from an unexpected topic")
-    algo = {"1": hashes.SHA1(), "2": hashes.SHA256()}.get(str(msg.get("SignatureVersion")))
-    if algo is None:
-        raise SignatureError("unsupported signature version")
+    if str(msg.get("SignatureVersion")) != "2":
+        raise SignatureError("unsupported signature version (topics are configured for version 2)")
+    algo = hashes.SHA256()
     cert = x509.load_pem_x509_certificate(fetch(url))
     try:
         cert.public_key().verify(base64.b64decode(msg["Signature"]), string_to_sign(msg), padding.PKCS1v15(), algo)

@@ -63,6 +63,7 @@ class HttpOrdersAdapter:
         sig = hmac.new(self.secret, ts.encode() + b"." + body, hashlib.sha256).hexdigest()
         req = urllib.request.Request(f"{self.base_url}/orders/status", data=body, method="POST",
                                      headers={"content-type": "application/json", "x-fd-timestamp": ts, "x-fd-signature": sig})
-        with urllib.request.urlopen(req, timeout=self.timeout) as r:  # noqa: S310 - https enforced above
+        # nosemgrep -- see the reason on the next line
+        with urllib.request.urlopen(req, timeout=self.timeout) as r:  # noqa: S310 - https enforced in __init__
             data = json.loads(r.read())
         return OrderStatus(ref, data["status"], data.get("detail", "")) if data.get("found") else None

@@ -97,7 +97,8 @@ def _get(url: str) -> dict:
     name = url.replace("/", "_").replace(":", "")[-180:]
     path = CACHE / name
     if not path.exists():
-        with urllib.request.urlopen(url, timeout=120) as r:  # noqa: S310 - fixed AWS host
+        # nosemgrep -- see the reason on the next line
+        with urllib.request.urlopen(url, timeout=120) as r:  # noqa: S310 - always the fixed AWS Price List host
             path.write_bytes(r.read())
     return json.loads(path.read_text())
 

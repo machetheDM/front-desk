@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import functools
 import hashlib
-import importlib.resources
+import pathlib
 import os
 from dataclasses import dataclass
 
@@ -24,7 +24,7 @@ class Prompt:
 
 @functools.cache
 def load(name: str = CURRENT) -> Prompt:
-    text = importlib.resources.files("frontdesk").joinpath(f"llm/prompts/{name}.md").read_text()
+    text = (pathlib.Path(__file__).parent / "prompts" / f"{name}.md").read_text(encoding="utf-8")
     return Prompt(name, text, hashlib.sha256(text.encode()).hexdigest()[:12])
 
 

@@ -89,5 +89,5 @@ def export_events(event, context):
         f"first_reply_seconds, CAST(from_iso8601_timestamp(replace(occurred_at, ' ', 'T')) AS timestamp(6)) FROM {dbname}.events_staging "
         f"WHERE \"$path\" LIKE '%/{since:%Y-%m-%d}/%'",
     ):
-        athena.start_query_execution(QueryString=q, WorkGroup=wg)  # nosemgrep: identifiers come from our own env, not input
+        athena.start_query_execution(QueryString=q, WorkGroup=wg)  # nosemgrep -- identifiers come from our own env, not input
     return {"exported": n, "day": f"{since:%Y-%m-%d}"}

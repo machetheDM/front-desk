@@ -34,10 +34,7 @@ class Principal:
     sub: str
     email: str
     groups: tuple[str, ...]
-
-    @property
-    def is_owner(self) -> bool:
-        return "owner" in self.groups
+    owner: bool = False
 
 
 class Denied(Exception):
@@ -51,7 +48,7 @@ def principal_from_claims(claims: dict) -> Principal:
     groups = claims.get("cognito:groups") or []
     if isinstance(groups, str):  # API Gateway flattens arrays to "[a b]"
         groups = groups.strip("[]").replace(",", " ").split()
-    return Principal(uuid.UUID(tid), claims["sub"], claims.get("email", ""), tuple(groups))
+    return Principal(uuid.UUID(tid), claims["sub"], claims.get("email", ""), tuple(groups), "owner" in groups)
 
 
 def _staff(tx: Transaction, p: Principal) -> dict:
@@ -84,13 +81,13 @@ def handle(db: Database, method: str, path: str, claims: dict, body: dict | None
             if m := re.fullmatch(r"/v1/inbox/conversations/([0-9a-f-]{36})/resolve", path):
                 return _json(200, resolve(tx, actor, m.group(1)))
             if path == "/v1/insights/summary":
-                if not p.is_owner:
+                if not p.owner:
                     raise Denied("owners only")
                 days = min(int((query or {}).get("days", 30)), 366)
                 audit.record_read(tx, actor_id=actor, resource_type="insights", resource_id=f"last-{days}-days")
                 return _json(200, insights.summary(tx, dt.datetime.now(dt.UTC) - dt.timedelta(days=days)))
         if path == "/v1/admin/deletion-requests" and method == "POST":
-            if not p.is_owner:
+            if not p.owner:
                 raise Denied("owners only")
             cid = (body or {}).get("customer_id", "")
             if not UUID_RE.match(cid):

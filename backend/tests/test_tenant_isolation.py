@@ -109,8 +109,11 @@ def test_without_a_tenant_context_every_table_reads_as_empty(db, two_tenants):
     a, _ = two_tenants
     _seed_conversation(db, a.tenant_id)
     with db.transaction(None) as tx:
-        for table in ("tenants", "customers", "conversations", "messages", "documents", "chunks", "audit_log"):
-            assert tx.scalar(f"SELECT count(*) FROM app.{table}") == 0, table  # nosemgrep: fixed table list
+        counts = tx.one("""SELECT (SELECT count(*) FROM app.tenants) AS tenants, (SELECT count(*) FROM app.customers) AS customers,
+                                  (SELECT count(*) FROM app.conversations) AS conversations, (SELECT count(*) FROM app.messages) AS messages,
+                                  (SELECT count(*) FROM app.documents) AS documents, (SELECT count(*) FROM app.chunks) AS chunks,
+                                  (SELECT count(*) FROM app.audit_log) AS audit_log""")
+        assert counts == {k: 0 for k in counts}
 
 
 def test_the_app_role_cannot_switch_off_row_level_security(db):

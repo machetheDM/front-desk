@@ -182,7 +182,8 @@ export class AppStack extends Stack {
     });
 
     // ---------- WhatsApp (End User Messaging Social -> SNS -> intake) ----------
-    const whatsappTopic = new sns.Topic(this, 'WhatsAppEvents', { topicName: `${prefix}-whatsapp-events`, masterKey: data.key });
+    // Signature version 2 (SHA-256): the intake Lambda rejects anything else (sns_verify.py).
+    const whatsappTopic = new sns.Topic(this, 'WhatsAppEvents', { topicName: `${prefix}-whatsapp-events`, masterKey: data.key, signatureVersion: '2' });
     whatsappTopic.addToResourcePolicy(new iam.PolicyStatement({
       principals: [new iam.ServicePrincipal('social-messaging.amazonaws.com')],
       actions: ['sns:Publish'],

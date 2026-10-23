@@ -40,7 +40,10 @@ jobs:
       - name: Migration lint (a table without forced RLS fails here)
         run: python -m frontdesk.db.lint_migrations db/migrations
       - name: Tests
-        run: pytest -q backend/tests ml/tests --cov=frontdesk --cov=frontdesk_ml --cov-report=term-missing:skip-covered
+        run: pytest -q backend/tests ml/tests --junitxml=pytest.xml --cov=frontdesk --cov=frontdesk_ml --cov-report=term-missing:skip-covered
+      - name: Failing tests as annotations
+        if: failure()
+        run: python scripts/ci/annotate.py junit pytest.xml
 
   evals:
     name: quality gates (offline pipeline vs floors in docs/PLAN.md)
@@ -119,11 +122,21 @@ jobs:
           /tmp/gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 .
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
-      - name: semgrep (our rules + community Python/TypeScript/secrets rules)
+      - name: semgrep, Front Desk rules (every finding blocks)
         run: |
           pip install semgrep==1.182.1
-          semgrep scan --error --metrics=off --exclude security/gate-fixtures \
-            --config security/semgrep --config p/python --config p/typescript --config p/secrets --config p/github-actions
+          semgrep scan --error --metrics=off --exclude security/gate-fixtures --config security/semgrep --json -o semgrep-ours.json . \
+            || { python scripts/ci/annotate.py semgrep semgrep-ours.json; exit 1; }
+      - name: semgrep, community rules (ERROR blocks; warnings are reported in the SARIF artifact)
+        run: |
+          EXCL="--exclude security/gate-fixtures --exclude docs/evidence/pricing-snapshot.json"
+          semgrep scan --metrics=off $EXCL --config p/python --config p/typescript --config p/secrets --config p/github-actions \
+            --sarif -o semgrep-community.sarif .
+          semgrep scan --error --severity ERROR --metrics=off $EXCL --config p/python --config p/typescript --config p/secrets \
+            --config p/github-actions --json -o semgrep-community.json . || { python scripts/ci/annotate.py semgrep semgrep-community.json; exit 1; }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with: { name: semgrep, path: "semgrep-*.sarif", retention-days: 30 }
       - name: trivy (dependencies and IaC misconfiguration)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

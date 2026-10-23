@@ -42,26 +42,27 @@ FIXED_TIME = dt.datetime(2026, 10, 14, 21, 5, tzinfo=dt.timezone(dt.timedelta(ho
 @contextlib.contextmanager
 def scratch_database(admin_dsn: str):
     import psycopg
+    from psycopg import sql
 
     from frontdesk.db.migrate import apply, local_runner
 
     name = f"frontdesk_eval_{uuid.uuid4().hex[:8]}"
     base, _ = admin_dsn.rsplit("/", 1)
     with psycopg.connect(admin_dsn, autocommit=True) as c:
-        c.execute(f'CREATE DATABASE "{name}"')  # nosemgrep: generated uuid suffix, not input
+        c.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))  # nosemgrep -- (psycopg sql.Identifier/Literal composition, not string SQL)
     try:
         run_tx, query = local_runner(f"{base}/{name}")
         apply(run_tx, query)
         pw = uuid.uuid4().hex
         with psycopg.connect(f"{base}/{name}", autocommit=True) as c:
-            c.execute(f"ALTER ROLE frontdesk_app PASSWORD '{pw}'")  # nosemgrep: random hex, throwaway database
-            c.execute(f'GRANT CONNECT ON DATABASE "{name}" TO frontdesk_app')  # nosemgrep: generated name
+            c.execute(sql.SQL("ALTER ROLE frontdesk_app PASSWORD {}").format(sql.Literal(pw)))  # nosemgrep -- (psycopg sql.Identifier/Literal composition, not string SQL)
+            c.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO frontdesk_app").format(sql.Identifier(name)))  # nosemgrep -- (psycopg sql.Identifier/Literal composition, not string SQL)
         scheme, rest = base.split("://", 1)
         host = rest.split("@", 1)[-1]
         yield f"{scheme}://frontdesk_app:{pw}@{host}/{name}"
     finally:
         with psycopg.connect(admin_dsn, autocommit=True) as c:
-            c.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')  # nosemgrep: generated name
+            c.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))  # nosemgrep -- (psycopg sql.Identifier/Literal composition, not string SQL)
 
 
 def doc_slugs(db) -> dict[str, str]:

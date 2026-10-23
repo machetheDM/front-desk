@@ -62,6 +62,12 @@ def test_a_certificate_from_a_non_sns_host_is_refused(signer):
         sns_verify.verify(sign(sns_msg(SigningCertURL="https://evil.example/sns.pem")), fetch=fetch)
 
 
+def test_signature_version_1_sha1_is_refused(signer):
+    sign, fetch = signer
+    with pytest.raises(sns_verify.SignatureError, match="version"):
+        sns_verify.verify(sign(sns_msg(SignatureVersion="1")), fetch=fetch)
+
+
 def test_a_message_from_another_topic_is_refused(signer):
     sign, fetch = signer
     with pytest.raises(sns_verify.SignatureError, match="unexpected topic"):
