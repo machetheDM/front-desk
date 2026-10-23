@@ -278,6 +278,7 @@ export class AppStack extends Stack {
       [apigw.HttpMethod.GET, '/v1/inbox/conversations/{id}'],
       [apigw.HttpMethod.POST, '/v1/inbox/conversations/{id}/reply'],
       [apigw.HttpMethod.POST, '/v1/inbox/conversations/{id}/resolve'],
+      [apigw.HttpMethod.POST, '/v1/inbox/conversations/{id}/template'],
       [apigw.HttpMethod.GET, '/v1/insights/summary'],
       [apigw.HttpMethod.POST, '/v1/admin/deletion-requests'],
     ] as const) {

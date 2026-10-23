@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
-      - run: pip install -e "backend[dev]" -e "ml[dev]"
+      - run: pip install -r requirements/dev/requirements.txt -e "backend[dev]" -e "ml[dev]"
       - name: Migration lint (a table without forced RLS fails here)
         run: python -m frontdesk.db.lint_migrations db/migrations
       - name: Tests
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
-      - run: pip install -e "backend[dev]" -e "ml[dev]"
+      - run: pip install -r requirements/dev/requirements.txt -e "backend[dev]" -e "ml[dev]"
       - name: Replay the demo tenant's labelled questions, then red-team, then gate
         run: |
           python -m frontdesk_ml.run_evals --pipeline offline --out reports/ci
@@ -171,7 +171,7 @@ jobs:
         with: { python-version: "${{ env.PYTHON_VERSION }}", cache: pip }
       - name: Install scanners (pinned)
         run: |
-          pip install semgrep==1.182.1 -e backend -e ml
+          pip install semgrep==1.182.1 -r requirements/dev/requirements.txt -e backend -e ml
           curl -sSL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
           echo "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb  /tmp/gitleaks.tgz" | sha256sum -c -
           tar xzf /tmp/gitleaks.tgz -C /tmp gitleaks && sudo mv /tmp/gitleaks /usr/local/bin/

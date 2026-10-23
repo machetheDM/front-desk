@@ -50,6 +50,14 @@ def parse_event(sns_message: dict) -> list[WhatsAppInbound]:
     return out
 
 
+SERVICE_WINDOW_HOURS = 24
+
+
+def within_service_window(last_customer_message_at, now) -> bool:
+    """Meta allows free-form business messages only within 24 hours of the customer's last message."""
+    return last_customer_message_at is not None and (now - last_customer_message_at).total_seconds() < SERVICE_WINDOW_HOURS * 3600
+
+
 class WhatsAppSender:
     def __init__(self, client=None, region: str = "af-south-1") -> None:
         if client is None:
@@ -61,6 +69,17 @@ class WhatsAppSender:
     def send_text(self, origination_phone_number_id: str, to: str, text: str) -> str:
         payload = {"messaging_product": "whatsapp", "recipient_type": "individual", "to": to.lstrip("+"),
                    "type": "text", "text": {"preview_url": False, "body": text[:4096]}}
+        r = self.client.send_whatsapp_message(originationPhoneNumberId=origination_phone_number_id,
+                                              message=json.dumps(payload).encode(), metaApiVersion="v20.0")
+        return r.get("messageId", "")
+
+    def send_template(self, origination_phone_number_id: str, to: str, template: str, language: str = "en",
+                      body_params: list[str] | None = None) -> str:
+        """Outside the 24-hour customer-service window Meta only accepts pre-approved templates.
+        SEAM(meta-template-approval): template names come from tenant config once Meta approves them."""
+        components = [{"type": "body", "parameters": [{"type": "text", "text": p} for p in (body_params or [])]}] if body_params else []
+        payload = {"messaging_product": "whatsapp", "to": to.lstrip("+"), "type": "template",
+                   "template": {"name": template, "language": {"code": language}, "components": components}}
         r = self.client.send_whatsapp_message(originationPhoneNumberId=origination_phone_number_id,
                                               message=json.dumps(payload).encode(), metaApiVersion="v20.0")
         return r.get("messageId", "")

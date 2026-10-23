@@ -78,6 +78,8 @@ def handle(db: Database, method: str, path: str, claims: dict, body: dict | None
                     return _json(200, read_conversation(tx, actor, m.group(1)))
             if m := re.fullmatch(r"/v1/inbox/conversations/([0-9a-f-]{36})/reply", path):
                 return _json(200, reply(tx, staff, m.group(1), (body or {}).get("text", ""), sender))
+            if m := re.fullmatch(r"/v1/inbox/conversations/([0-9a-f-]{36})/template", path):
+                return _json(200, send_followup_template(tx, staff, m.group(1), sender))
             if m := re.fullmatch(r"/v1/inbox/conversations/([0-9a-f-]{36})/resolve", path):
                 return _json(200, resolve(tx, actor, m.group(1)))
             if path == "/v1/insights/summary":
@@ -141,11 +143,22 @@ def reply(tx: Transaction, staff: dict, conversation_id: str, text: str, sender=
     text = text.strip()
     if not text or len(text) > 4000:
         return {"error": "reply must be 1 to 4000 characters"}
-    conv = tx.one("""SELECT v.channel, c.channel_address FROM app.conversations v
+    conv = tx.one("""SELECT v.channel, c.channel_address,
+                            (SELECT max(created_at) FROM app.messages m WHERE m.tenant_id = v.tenant_id
+                               AND m.conversation_id = v.conversation_id AND m.author = 'customer') AS last_in
+                     FROM app.conversations v
                      JOIN app.customers c ON c.tenant_id = v.tenant_id AND c.customer_id = v.customer_id
                      WHERE v.conversation_id = :c""", {"c": conversation_id})
     if conv is None:
         return {"error": "not found"}
+    if conv["channel"] == "whatsapp":
+        from .channels.whatsapp import within_service_window
+        from .pipeline import _as_dt
+
+        last = _as_dt(conv["last_in"]) if conv["last_in"] else None
+        if not within_service_window(last, dt.datetime.now(dt.UTC)):
+            return {"error": "outside_24h_window",
+                    "hint": "WhatsApp allows free text only within 24 hours of the customer's last message. Send the approved follow-up template instead."}
     mid = tx.scalar(
         """INSERT INTO app.messages (tenant_id, conversation_id, direction, author, staff_id, body, body_redacted)
            VALUES (app.current_tenant(), :c, 'out', 'staff', :s, :b, :b) RETURNING message_id::text""",
@@ -154,6 +167,26 @@ def reply(tx: Transaction, staff: dict, conversation_id: str, text: str, sender=
     audit.record(tx, actor_type="staff", actor_id=f"staff:{staff['staff_id']}", action="write", resource_type="message", resource_id=mid)
     delivered = sender(tx, conv["channel"], conv["channel_address"], text) if sender else None
     return {"message_id": mid, "delivered": delivered}
+
+
+def send_followup_template(tx: Transaction, staff: dict, conversation_id: str, sender=None) -> dict:
+    """The approved utility template that reopens a WhatsApp conversation after 24 hours.
+    Utility, never marketing: it asks the customer to reply, it does not promote anything."""
+    cfg_row = tx.one("SELECT value FROM app.tenant_config WHERE key = 'whatsapp'")
+    cfg = (cfg_row["value"] if isinstance(cfg_row["value"], dict) else json.loads(cfg_row["value"])) if cfg_row else {}
+    template = cfg.get("follow_up_template")
+    if not template:
+        return {"error": "no approved follow-up template configured for this business"}
+    conv = tx.one("""SELECT c.channel_address FROM app.conversations v JOIN app.customers c
+                     ON c.tenant_id = v.tenant_id AND c.customer_id = v.customer_id WHERE v.conversation_id = :c AND v.channel = 'whatsapp'""",
+                  {"c": conversation_id})
+    if conv is None:
+        return {"error": "not a WhatsApp conversation"}
+    delivered = sender(tx, "whatsapp-template", conv["channel_address"], template) if sender else None
+    events.emit(tx, conversation_id, "template_sent", {"template": template, "staff_id": staff["staff_id"]})
+    audit.record(tx, actor_type="staff", actor_id=f"staff:{staff['staff_id']}", action="write", resource_type="template",
+                 resource_id=conversation_id, detail={"template": template})
+    return {"template": template, "delivered": delivered}
 
 
 def resolve(tx: Transaction, actor: str, conversation_id: str) -> dict:

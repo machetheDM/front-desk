@@ -5,8 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 rm -rf build/lambda && mkdir -p build/lambda
 # Binary wheels for the Lambda platform only: nothing compiles on the build machine.
-python -m pip install --quiet --target build/lambda --platform manylinux2014_aarch64 --implementation cp \
-  --python-version 3.13 --only-binary=:all: --upgrade "pydantic>=2.7" "numpy>=1.26" "pyyaml>=6.0" "cryptography>=43"
+python -m pip install --quiet --target build/lambda --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 --implementation cp \
+  --python-version 3.13 --only-binary=:all: -r requirements/lambda/requirements.txt
 cp -r backend/frontdesk build/lambda/frontdesk
 cp -r db/migrations build/lambda/frontdesk/migrations
 # boto3 is in the Lambda runtime; tests, caches and local-only code are not shipped.

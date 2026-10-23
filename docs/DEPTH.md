@@ -4,7 +4,7 @@ An item is **done** only when its evidence exists and the link below opens it. *
 the code is written and tested against fakes, and the remaining step needs an AWS account, a
 real client or a paid service; the seam is named. **Open** means not yet built.
 
-Last updated: Phase 2 complete, 23 October 2026.
+Last updated: Phase 3 complete, 23 October 2026.
 
 ## AI / ML engineering
 
@@ -31,6 +31,15 @@ Last updated: Phase 2 complete, 23 October 2026.
 | Audit of reads demonstrated | done | `test_inbox_api.py::test_reading_a_conversation_is_audited_and_answers_who_read_it` |
 | Owner insights computed from events | done | `insights.py`, `test_insights.py` |
 | CSP-compatible static inbox | done | `apps/inbox/scripts/check-no-inline-scripts.mjs`, ADR 0005 addendum |
+
+## Phase 3 additions
+
+| Item | Status | Evidence |
+|---|---|---|
+| WhatsApp intake end to end (verify, route, store, start with ids only) | done; live number is a seam (Meta verification) | `test_whatsapp_and_marketing.py::test_the_intake_lambda...` |
+| 24-hour window and approved templates | done; template approval is a seam | `inbox_api.reply`, `send_followup_template`, `channels/whatsapp.py` |
+| Consent and opt-out, marketing opt-in separate | done | `consent.py`, `marketing.py`, `test_whatsapp_and_marketing.py` |
+| Pinned Python dependencies in SBOM and Trivy | done | `requirements/`, CI `security` job |
 
 ## Machine learning beyond the LLM
 
@@ -72,11 +81,11 @@ Last updated: Phase 2 complete, 23 October 2026.
 | Item | Status | Evidence |
 |---|---|---|
 | STRIDE threat model + attack trees | done (draft, reviewed per phase) | `docs/THREAT-MODEL.md` |
-| WhatsApp/SNS and webhook signature verification | Phase 3 | |
-| Per-number and per-tenant rate limits | Phase 3 | |
-| Detection rules with runbooks | done in code | `docs/DETECTIONS.md`; `stacks.test.ts::every detection has a runbook` |
-| OWASP ASVS L2 checklist mapped to code | Phase 3 | |
-| DAST (OWASP ZAP) against dev | Phase 3 | |
+| WhatsApp/SNS and webhook signature verification | done | `channels/sns_verify.py` (v2 only), `channels/webhook_signature.py`, `test_channels.py` |
+| Per-number and per-tenant rate limits | done | `ratelimit.py`, `test_pipeline.py::test_a_sender_flooding_the_number_is_rate_limited` |
+| Detection rules with runbooks, firing in tests | done | `docs/DETECTIONS.md`; `infra/test/detections.test.ts` |
+| OWASP ASVS L2 checklist mapped to code | done | `docs/ASVS.md` |
+| DAST (OWASP ZAP) against dev | workflow done, seam (needs the dev site) | `.github/workflows/zap.yml` |
 | Recorded incident drill | Phase 5 | |
 
 ## DevSecOps

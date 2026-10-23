@@ -111,7 +111,7 @@ describe('app stack', () => {
   test('every inbox route requires the Cognito authorizer', () => {
     const routes = dev.findResources('AWS::ApiGatewayV2::Route');
     const inbox = Object.values(routes).filter((r: any) => /\/v1\/(inbox|insights|admin)/.test(r.Properties.RouteKey));
-    expect(inbox.length).toBe(6);
+    expect(inbox.length).toBe(7);
     for (const r of inbox as any[]) expect(r.Properties.AuthorizationType).toBe('JWT');
   });
 

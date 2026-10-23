@@ -10,14 +10,16 @@ from .common import body_of, db
 
 
 def _sender(tx, channel: str, address: str | None, text: str):
-    if channel != "whatsapp" or not address:
+    if channel not in ("whatsapp", "whatsapp-template") or not address:
         return None  # web replies are picked up by the widget on its next poll
     row = tx.one("SELECT value FROM app.tenant_config WHERE key = 'whatsapp'")
     if not row:
         return None
     cfg = row["value"] if isinstance(row["value"], dict) else json.loads(row["value"])
-    # SEAM(whatsapp-24h-window): Meta allows free-form replies only within 24 hours of the
-    # customer's last message; outside it a pre-approved template is required (docs/PLAN.md Phase 3).
+    # inbox_api.reply refuses free text outside Meta's 24-hour window; there, staff send the
+    # tenant's approved follow-up template ("text" is then the template name).
+    if channel == "whatsapp-template":
+        return WhatsAppSender().send_template(cfg["phone_number_id"], address, text)
     return WhatsAppSender().send_text(cfg["phone_number_id"], address, text)
 
 

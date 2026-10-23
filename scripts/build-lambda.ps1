@@ -6,8 +6,8 @@ $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 if (Test-Path build\lambda) { Remove-Item -Recurse -Force build\lambda }
 New-Item -ItemType Directory -Force build\lambda | Out-Null
-python -m pip install --quiet --target build\lambda --platform manylinux2014_aarch64 --implementation cp `
-  --python-version 3.13 --only-binary=:all: --upgrade "pydantic>=2.7" "numpy>=1.26" "pyyaml>=6.0" "cryptography>=43"
+python -m pip install --quiet --target build\lambda --platform manylinux_2_28_aarch64 --platform manylinux2014_aarch64 --implementation cp `
+  --python-version 3.13 --only-binary=:all: -r requirements/lambda/requirements.txt
 Copy-Item -Recurse backend\frontdesk build\lambda\frontdesk
 Copy-Item -Recurse db\migrations build\lambda\frontdesk\migrations
 Get-ChildItem build\lambda -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force

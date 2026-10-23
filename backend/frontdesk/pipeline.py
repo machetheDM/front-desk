@@ -95,6 +95,9 @@ def receive(db: Database, inb: Inbound) -> Received:
         if policy.is_opt_out(red.text):
             consent.opt_out(tx, customer_id, inb.channel)
             return Received(conv, mid, customer_id, first, True, "opt_out")
+        if policy.is_marketing_opt_in(red.text):
+            # The evidence is the message itself: which words, when, on which channel.
+            consent.record(tx, customer_id, "marketing", True, inb.channel, f"keyword in message {mid}")
         if not consent.may_answer(tx, customer_id):
             return Received(conv, mid, customer_id, first, False, "opted_out_earlier")
         rl = ratelimit.check_and_count(tx, str(inb.tenant_id), inb.channel_address)
@@ -167,6 +170,8 @@ def persist(tx: Transaction, rec: Received, o: Outcome) -> str:
         events.emit(tx, rec.conversation_id, "refused", {**base, "reason": o.handoff_reason})
     elif o.action == "opted_out":
         events.emit(tx, rec.conversation_id, "opted_out", base)
+    elif o.action == "opted_in":
+        events.emit(tx, rec.conversation_id, "opted_in", base)
     if o.guardrail_intervened:
         telemetry.metric("GuardrailIntervened")
     if "canary_leak" in " ".join(o.validation_problems):

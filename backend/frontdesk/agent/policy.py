@@ -73,6 +73,15 @@ def is_small_talk(text: str) -> bool:
     return bool(SMALL_TALK.match(text))
 
 
+# Marketing opt-in must be explicit and unambiguous (POPIA s69): an exact keyword, never inferred
+# from "yes" or "thanks", and never from being answered.
+OPT_IN_MARKETING = re.compile(r"^\s*(join updates|subscribe me|yes to updates)\s*[.!]*\s*$", _F)
+
+
+def is_marketing_opt_in(text: str) -> bool:
+    return bool(OPT_IN_MARKETING.match(text))
+
+
 def is_opt_out(text: str) -> bool:
     return bool(OPT_OUT.match(text))
 

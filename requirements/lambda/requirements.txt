@@ -1,0 +1,13 @@
+# Generated from a working environment on 2026-10-23; pinned so builds are reproducible and
+# the SBOM and Trivy see exact versions. Update deliberately, then run the full test suite.
+# Lambda runtime dependencies (boto3 is provided by the Lambda runtime).
+pydantic==2.14.1
+pydantic-core==2.50.1
+annotated-types==0.8.0
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+numpy==2.5.4
+pyyaml==6.0.3
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.12

@@ -1,0 +1,23 @@
+# Generated from a working environment on 2026-10-23; pinned so builds are reproducible and
+# the SBOM and Trivy see exact versions. Update deliberately, then run the full test suite.
+-r ../lambda/requirements.txt
+boto3==1.43.118
+botocore==1.43.118
+s3transfer==0.19.3
+jmespath==1.1.0
+python-dateutil==2.9.0.post0
+six==1.17.0
+urllib3==2.8.0
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pytest==9.1.1
+pluggy==1.7.0
+iniconfig==2.3.1
+packaging==26.3
+pygments==2.21.0
+pytest-cov==7.1.0
+coverage==7.17.0
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+threadpoolctl==3.7.0

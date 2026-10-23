@@ -6,7 +6,7 @@ any transition not in the table. The trace of states is stored with every answer
 it say that?" has a precise answer, and tests can assert a path ("an injection never reaches
 DRAFT").
 
-    RECEIVED -> SCREEN -> (OPTED_OUT | REFUSE | SMALL_TALK -> SEND | POLICY)
+    RECEIVED -> SCREEN -> (OPTED_OUT | OPTED_IN | REFUSE | SMALL_TALK -> SEND | POLICY)
     POLICY -> (HANDOFF | REFUSE | TOOLS)
     TOOLS -> (SEND | HANDOFF | RETRIEVE)
     RETRIEVE -> (ROUTE | HANDOFF)
@@ -54,13 +54,14 @@ class State(enum.Enum):
     HANDOFF = "handoff"
     REFUSE = "refuse"
     OPTED_OUT = "opted_out"
+    OPTED_IN = "opted_in"
     DEGRADED = "degraded"
 
 
 S = State
 TRANSITIONS: dict[State, set[State]] = {
     S.RECEIVED: {S.SCREEN},
-    S.SCREEN: {S.OPTED_OUT, S.REFUSE, S.SMALL_TALK, S.POLICY, S.DEGRADED},
+    S.SCREEN: {S.OPTED_OUT, S.OPTED_IN, S.REFUSE, S.SMALL_TALK, S.POLICY, S.DEGRADED},
     S.SMALL_TALK: {S.SEND},
     S.POLICY: {S.HANDOFF, S.REFUSE, S.TOOLS},
     S.TOOLS: {S.SEND, S.HANDOFF, S.RETRIEVE},
@@ -69,7 +70,7 @@ TRANSITIONS: dict[State, set[State]] = {
     S.DRAFT: {S.VALIDATE, S.DEGRADED},
     S.VALIDATE: {S.SEND, S.ROUTE, S.HANDOFF},
 }
-TERMINAL = {S.SEND, S.HANDOFF, S.REFUSE, S.OPTED_OUT, S.DEGRADED}
+TERMINAL = {S.SEND, S.HANDOFF, S.REFUSE, S.OPTED_OUT, S.OPTED_IN, S.DEGRADED}
 
 
 class IllegalTransition(RuntimeError):
@@ -185,6 +186,8 @@ class Agent:
         text = ctx.red.text
         if policy.is_opt_out(text):
             return S.OPTED_OUT
+        if policy.is_marketing_opt_in(text):
+            return S.OPTED_IN
         decision = policy.evaluate(text)
         ctx.rule = decision.rule
         ctx.intent = policy.keyword_intent(text)
@@ -306,6 +309,10 @@ class Agent:
             o.action, o.handoff_reason = "refused", ctx.reason or "injection"
             o.reply = (f"I can't do that. I only answer questions about {ctx.tenant['name']} from our published information. "
                        "Reply PERSON if you would like to talk to a person.")
+        elif state == S.OPTED_IN:
+            o.action, o.intent = "opted_in", "marketing_opt_in"
+            o.reply = (f"Thanks: you'll get occasional updates and offers from {ctx.tenant['name']}. "
+                       "Send STOP at any time and they stop.")
         elif state == S.OPTED_OUT:
             o.action, o.intent = "opted_out", "opt_out"
             o.reply = "Done: you won't get any more messages from us. Send us a message any time if you need us again."
@@ -314,7 +321,7 @@ class Agent:
             o.assigned_staff = pick_staff(ctx.tx, o.handoff_reason, ctx.intent)
             o.reply = f"Thanks for your message. A person from {ctx.tenant['name']} will reply to you here {when}."
             o.summary = summary_lines(ctx, o)
-        if ctx.turn.first_message and o.action != "opted_out":
+        if ctx.turn.first_message and o.action not in ("opted_out", "opted_in"):
             o.reply = disclosure(ctx.tenant) + "\n\n" + o.reply
         return o
 
