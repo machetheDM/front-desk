@@ -10,7 +10,7 @@ import { monthlyLimitUsd } from '../lib/org/budgets-stack';
 const app = buildApp({ context: { 'frontdesk:ci': 'true', 'frontdesk:testing': 'true' } });
 const stack = (name: string) => app.node.findChild(name) as Stack;
 const tpl = (name: string) => Template.fromStack(stack(name));
-const workloadStacks = ['Ai', 'Data', 'Web', 'App'].flatMap((s) => [`FrontDesk-dev-${s}`, `FrontDesk-prod-${s}`]);
+const workloadStacks = ['Ai', 'Data', 'Web', 'Signing', 'App'].flatMap((s) => [`FrontDesk-dev-${s}`, `FrontDesk-prod-${s}`]);
 
 describe('every stack', () => {
   test('passes cdk-nag AwsSolutions with no unacknowledged errors', () => {

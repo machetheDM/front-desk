@@ -48,20 +48,20 @@ def scratch_database(admin_dsn: str):
     name = f"frontdesk_eval_{uuid.uuid4().hex[:8]}"
     base, _ = admin_dsn.rsplit("/", 1)
     with psycopg.connect(admin_dsn, autocommit=True) as c:
-        c.execute(f'CREATE DATABASE "{name}"')
+        c.execute(f'CREATE DATABASE "{name}"')  # nosemgrep: generated uuid suffix, not input
     try:
         run_tx, query = local_runner(f"{base}/{name}")
         apply(run_tx, query)
         pw = uuid.uuid4().hex
         with psycopg.connect(f"{base}/{name}", autocommit=True) as c:
-            c.execute(f"ALTER ROLE frontdesk_app PASSWORD '{pw}'")
-            c.execute(f'GRANT CONNECT ON DATABASE "{name}" TO frontdesk_app')
+            c.execute(f"ALTER ROLE frontdesk_app PASSWORD '{pw}'")  # nosemgrep: random hex, throwaway database
+            c.execute(f'GRANT CONNECT ON DATABASE "{name}" TO frontdesk_app')  # nosemgrep: generated name
         scheme, rest = base.split("://", 1)
         host = rest.split("@", 1)[-1]
         yield f"{scheme}://frontdesk_app:{pw}@{host}/{name}"
     finally:
         with psycopg.connect(admin_dsn, autocommit=True) as c:
-            c.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+            c.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')  # nosemgrep: generated name
 
 
 def doc_slugs(db) -> dict[str, str]:

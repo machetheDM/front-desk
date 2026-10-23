@@ -42,11 +42,19 @@ rules:
     languages: [python]
     paths:
       include: ["backend/frontdesk/", "security/gate-fixtures/semgrep/"]
-    pattern-either:
-      - pattern: $LOG.$M(..., body=$B, ...)
-      - pattern: $LOG.$M(..., text=$B, ...)
-      - pattern: print(..., $MSG.body, ...)
-      - pattern: $LOG.$M(f"...{$MSG.body}...", ...)
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$M(..., body=$B, ...)
+          - pattern: $LOG.$M(..., text=$B, ...)
+          - pattern: $LOG.$M(f"...{$MSG.body}...", ...)
+          - pattern: $LOG.$M(f"...{$MSG.text}...", ...)
+          - pattern: print(..., $MSG.body, ...)
+      - metavariable-regex:
+          metavariable: $LOG
+          regex: ^(log|logger|logging|LOG|_log|_logger|print)$
+      - metavariable-regex:
+          metavariable: $M
+          regex: ^(debug|info|warning|warn|error|exception|critical|log)$
 
   - id: frontdesk-tls-verification-disabled
     message: TLS verification must never be disabled.

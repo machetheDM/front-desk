@@ -1,0 +1,68 @@
+# Deploys dev after CI passes on main. OIDC only: no AWS keys exist anywhere in GitHub.
+# Does nothing until the owner has run docs/DEPLOY.md step 16 (sets AWS_DEV_DEPLOY_ROLE).
+name: deploy-dev
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # lets the job request a GitHub OIDC token for AWS
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.AWS_DEV_DEPLOY_ROLE != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-24.04
+    environment: dev
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { ref: "${{ github.event.workflow_run.head_sha || github.sha }}" }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13" }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "22" }
+      - name: Build the Lambda package and the inbox
+        run: |
+          bash scripts/build-lambda.sh
+          (cd apps/inbox && npm ci && npm run build)
+          (cd infra && npm ci)
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEV_DEPLOY_ROLE }}
+          aws-region: af-south-1
+          role-session-name: gh-deploy-dev-${{ github.run_id }}
+      - name: Deploy (canary release of the answer function happens inside CodeDeploy)
+        working-directory: infra
+        env:
+          DEV_ACCOUNT: ${{ vars.AWS_DEV_ACCOUNT }}
+          ALERT_EMAIL: ${{ vars.ALERT_EMAIL }}
+        run: |
+          npx cdk deploy FrontDesk-dev-Ai FrontDesk-dev-Data FrontDesk-dev-Web FrontDesk-dev-Signing FrontDesk-dev-App FrontDesk-dev-Detection \
+            --require-approval never -c devAccount="$DEV_ACCOUNT" -c alertEmail="$ALERT_EMAIL" --outputs-file ../cdk-outputs.json
+      - name: Migrate (fails the deploy if any table lacks forced RLS)
+        run: |
+          aws lambda invoke --function-name frontdesk-dev-migrate out.json >/dev/null
+          cat out.json; python3 -c "import json,sys; sys.exit(0 if json.load(open('out.json')).get('ok') else 1)"
+      - name: Smoke test (one known question through the real pipeline, nothing sent)
+        run: |
+          aws lambda invoke --function-name frontdesk-dev-smoke smoke.json >/dev/null
+          cat smoke.json; python3 -c "import json,sys; sys.exit(0 if json.load(open('smoke.json')).get('ok') else 1)"
+      - name: Record the deployment for DORA metrics
+        if: always()
+        env:
+          OUTCOME: ${{ job.status }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          echo "{\"env\":\"dev\",\"sha\":\"$SHA\",\"outcome\":\"$OUTCOME\",\"finished_at\":\"$(date -u +%FT%TZ)\"}" > deployment.json
+          echo "### Deployed dev: $OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with: { name: deployment-dev, path: deployment.json, retention-days: 400 }

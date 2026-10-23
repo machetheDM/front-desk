@@ -17,6 +17,7 @@ import { DataStack } from './workload/data-stack';
 import { WebStack } from './workload/web-stack';
 import { AppStack } from './workload/app-stack';
 import { DetectionStack } from './workload/detection-stack';
+import { SigningStack } from './workload/signing-stack';
 
 
 export function buildApp(props?: AppProps): App {
@@ -64,6 +65,7 @@ export function buildApp(props?: AppProps): App {
     const ai = new AiStack(app, name('Ai'), { env: { account, region: AI_REGION }, envName, crossRegionReferences: true });
     const data = new DataStack(app, name('Data'), { env: home, envName });
     const web = new WebStack(app, name('Web'), { env: home, envName });
+    const signing = new SigningStack(app, name('Signing'), { env: home, envName });
     const signedKey = ctx(app, 'frontdesk:signedCodeKey');
     const signedBucket = ctx(app, 'frontdesk:signedCodeBucket');
     // Prod needs signed code; in CI synth a placeholder key stands in for the signing job output.
@@ -77,11 +79,12 @@ export function buildApp(props?: AppProps): App {
       modelSmall: ctx(app, 'frontdesk:modelSmall', 'eu.anthropic.claude-haiku-5-5')!,
       modelLarge: ctx(app, 'frontdesk:modelLarge', 'eu.anthropic.claude-sonnet-5-5')!,
       signedCode,
+      signingProfile: signing.profile,
     });
     new DetectionStack(app, name('Detection'), { env: home, envName, alarmTopic: appStack.alarmTopic });
 
     // Every role in the workload stacks carries the boundary created by the OIDC stack.
-    for (const s of [ai, data, web, appStack]) applyBoundary(s);
+    for (const s of [ai, data, web, signing, appStack]) applyBoundary(s);
   }
 
 

@@ -1,0 +1,25 @@
+# DAST: OWASP ZAP baseline scan of the deployed dev site and the chat API, weekly and on demand.
+# Baseline = passive scan (no attack traffic), safe to run against dev.
+name: zap
+
+on:
+  schedule: [{ cron: "17 3 * * 1" }]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write   # ZAP opens or updates an issue with findings
+
+jobs:
+  baseline:
+    if: ${{ vars.DEV_WEB_URL != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: ZAP baseline, inbox site
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ vars.DEV_WEB_URL }}/inbox/
+          rules_file_name: .zap/rules.tsv
+          fail_action: true
+          allow_issue_writing: true

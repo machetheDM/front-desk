@@ -4,7 +4,7 @@ An item is **done** only when its evidence exists and the link below opens it. *
 the code is written and tested against fakes, and the remaining step needs an AWS account, a
 real client or a paid service; the seam is named. **Open** means not yet built.
 
-Last updated: Phase 1 complete, 22 October 2026.
+Last updated: Phase 2 complete, 23 October 2026.
 
 ## AI / ML engineering
 
@@ -17,10 +17,20 @@ Last updated: Phase 1 complete, 22 October 2026.
 | Model routing (small first, large when needed) | done | `llm/router.py`, `test_metering_and_router.py` |
 | Prompt caching | done in code, seam (measured savings need Bedrock) | `llm/bedrock.py` cache points; `test_bedrock_client.py::test_system_prompt_and_tools_sit_before_cache_points...` |
 | Versioned prompts | done | `llm/prompts/answer.v1.md`, version+hash on every outcome |
-| Streaming web replies | Phase 2 | |
+| Streaming web replies | done (progress + validated answer over WebSocket; ADR 0009) | `handlers/web_chat.py::ws_handler`, `apps/widget/widget.js`, `app-stack.ts` WebSocketApi |
 | Citations enforced (no source, no answer) | done | `llm/validate.py`, `test_validate.py` |
 | recall@k and MRR on a labelled set | done | `ml/frontdesk_ml/metrics.py`, eval report |
 | Cost and latency per answer by route | done offline; seam for Bedrock cost | `run_evals.py` `by_route`; `llm/metering.py` |
+
+## Phase 2 additions
+
+| Item | Status | Evidence |
+|---|---|---|
+| Staff inbox with handoff queue, summaries, reply, resolve | done | `inbox_api.py`, `apps/inbox`, `test_inbox_api.py` |
+| Cognito MFA, tenant from verified claim | done | `app-stack.ts` (MfaConfiguration ON), `inbox_api.principal_from_claims` |
+| Audit of reads demonstrated | done | `test_inbox_api.py::test_reading_a_conversation_is_audited_and_answers_who_read_it` |
+| Owner insights computed from events | done | `insights.py`, `test_insights.py` |
+| CSP-compatible static inbox | done | `apps/inbox/scripts/check-no-inline-scripts.mjs`, ADR 0005 addendum |
 
 ## Machine learning beyond the LLM
 
@@ -52,7 +62,7 @@ Last updated: Phase 1 complete, 22 October 2026.
 | IAM Identity Center with MFA, no IAM users | done (runbook), SCP enforced | `docs/DEPLOY.md` steps 4, 5, 10; SCP `deny-long-lived-credentials` |
 | Permission boundaries on every role | done | `github-oidc-stack.ts` boundary; `stacks.test.ts::every role in a workload stack carries the permission boundary` |
 | Database not reachable from the internet; Data API only | done | `data-stack.ts`; `stacks.test.ts` "Aurora is private", "no internet gateway and no NAT"; ADR 0004 |
-| KMS with tenant encryption context | key done; per-object context Phase 2 (S3 uploads) | `data-stack.ts` |
+| KMS with tenant encryption context | key done; per-object tenant context is a seam until documents are uploaded through S3 (Phase 6 onboarding) | `data-stack.ts` |
 | Org CloudTrail to log-archive with Object Lock | done in code | `org-trail-stack.ts`, `log-archive-stack.ts`, ADR 0007 |
 | IAM Access Analyzer (external access) | done in code | `org/security-stack.ts`, DET-10 |
 | Access Analyzer findings at zero | seam: needs deployed org | |
@@ -91,7 +101,7 @@ Last updated: Phase 1 complete, 22 October 2026.
 | Indirect injection through a poisoned FAQ | done | `retrieval/quarantine.py`, `test_quarantine.py`, red-team rt27 to rt29 |
 | Canary tokens for prompt leakage | done | `llm/prompts.py`, validator, DET-11 |
 | PII redacted before the model and in logs | done (model); logs: Semgrep rule | `redact.py`, `test_redaction.py`, `frontdesk-message-text-in-logs` rule |
-| POPIA deletion reaching transcripts, chunks, embeddings | Phase 5 (schema ready: `chunks.source_customer_id`) | |
+| POPIA deletion reaching transcripts, chunks, embeddings | done | `deletion.py`, `test_inbox_api.py::test_a_deletion_request_previews_then_erases...` |
 | Red-team suite (promptfoo) in CI with attack success rate | done offline; promptfoo export done, release run is a seam | `ml/frontdesk_ml/redteam.py --export-promptfoo` |
 
 ## Forward deployed / architecture / consulting

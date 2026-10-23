@@ -1,0 +1,74 @@
+# Prod is deployed by hand-started workflow only, waits for the owner's approval on the `prod`
+# environment, and ships only code signed by AWS Signer (prod's CodeSigningConfig enforces it).
+name: deploy-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or commit to release (must have passed CI)"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.AWS_PROD_DEPLOY_ROLE != '' }}
+    runs-on: ubuntu-24.04
+    environment: prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { ref: "${{ inputs.ref }}" }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13" }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "22" }
+      - run: |
+          bash scripts/build-lambda.sh
+          (cd apps/inbox && npm ci && npm run build)
+          (cd infra && npm ci)
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PROD_DEPLOY_ROLE }}
+          aws-region: af-south-1
+          role-session-name: gh-deploy-prod-${{ github.run_id }}
+      - name: Signing stack first (bucket and Signer profile)
+        working-directory: infra
+        env: { PROD_ACCOUNT: "${{ vars.AWS_PROD_ACCOUNT }}" }
+        run: npx cdk deploy FrontDesk-prod-Signing --require-approval never -c prodAccount="$PROD_ACCOUNT" --outputs-file ../signing.json
+      - name: Sign the Lambda package
+        id: sign
+        run: |
+          BUCKET=$(python3 -c "import json;print(json.load(open('signing.json'))['FrontDesk-prod-Signing']['ArtifactsBucket'])")
+          PROFILE=$(python3 -c "import json;print(json.load(open('signing.json'))['FrontDesk-prod-Signing']['SigningProfileName'])")
+          KEY="unsigned/lambda-${GITHUB_SHA}.zip"
+          VERSION=$(aws s3api put-object --bucket "$BUCKET" --key "$KEY" --body build/lambda.zip --query VersionId --output text)
+          JOB=$(aws signer start-signing-job --source "s3={bucketName=$BUCKET,key=$KEY,version=$VERSION}" \
+                --destination "s3={bucketName=$BUCKET,prefix=signed/}" --profile-name "$PROFILE" --query jobId --output text)
+          for i in $(seq 1 60); do S=$(aws signer describe-signing-job --job-id "$JOB" --query status --output text); [ "$S" != "InProgress" ] && break; sleep 3; done
+          [ "$S" = "Succeeded" ] || { echo "signing $S"; exit 1; }
+          SKEY=$(aws signer describe-signing-job --job-id "$JOB" --query signedObject.s3.key --output text)
+          SVER=$(aws s3api head-object --bucket "$BUCKET" --key "$SKEY" --query VersionId --output text)
+          { echo "bucket=$BUCKET"; echo "key=$SKEY"; echo "version=$SVER"; } >> "$GITHUB_OUTPUT"
+      - name: Deploy prod with the signed package
+        working-directory: infra
+        env:
+          PROD_ACCOUNT: ${{ vars.AWS_PROD_ACCOUNT }}
+          ALERT_EMAIL: ${{ vars.ALERT_EMAIL }}
+          B: ${{ steps.sign.outputs.bucket }}
+          K: ${{ steps.sign.outputs.key }}
+          V: ${{ steps.sign.outputs.version }}
+        run: |
+          npx cdk deploy FrontDesk-prod-Ai FrontDesk-prod-Data FrontDesk-prod-Web FrontDesk-prod-App FrontDesk-prod-Detection \
+            --require-approval never -c prodAccount="$PROD_ACCOUNT" -c alertEmail="$ALERT_EMAIL" \
+            -c frontdesk:signedCodeBucket="$B" -c frontdesk:signedCodeKey="$K" -c frontdesk:signedCodeVersion="$V"
+      - name: Migrate and smoke test
+        run: |
+          aws lambda invoke --function-name frontdesk-prod-migrate out.json >/dev/null; cat out.json
+          python3 -c "import json,sys; sys.exit(0 if json.load(open('out.json')).get('ok') else 1)"

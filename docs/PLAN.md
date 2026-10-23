@@ -113,6 +113,7 @@ Definitions (implemented in `ml/frontdesk_ml/metrics.py`):
 - ADR 0006: Offline deterministic pipeline as a CI gate alongside the Bedrock pipeline.
 - ADR 0007: CloudTrail log archive with S3 Object Lock in governance mode until a client pays.
 - ADR 0008: Offline floors calibrated to the measured baseline; clean holdout reported separately.
+- ADR 0009: Stream progress and validated answers, never unvalidated model tokens.
 
 ## 7. Money
 

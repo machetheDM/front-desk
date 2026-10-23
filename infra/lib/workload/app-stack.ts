@@ -44,6 +44,7 @@ export interface AppStackProps extends StackProps {
   alertEmail?: string;
   modelSmall: string;
   modelLarge: string;
+  signingProfile: signer.ISigningProfile;
   /** Prod deploys signed code from the signing bucket (scripts/sign-lambda.ps1). */
   signedCode?: { bucketName: string; key: string; objectVersion?: string };
 }
@@ -64,13 +65,9 @@ export class AppStack extends Stack {
     const alarmAction = new cwActions.SnsAction(this.alarmTopic);
 
     // ---------- Code, signing ----------
-    const signingProfile = new signer.SigningProfile(this, 'SigningProfile', {
-      platform: signer.Platform.AWS_LAMBDA_SHA384_ECDSA,
-      signatureValidity: Duration.days(365),
-    });
     // Prod refuses unsigned code outright. Dev warns, so a laptop deploy still works.
     const codeSigningConfig = new lambda.CodeSigningConfig(this, 'CodeSigning', {
-      signingProfiles: [signingProfile],
+      signingProfiles: [props.signingProfile],
       untrustedArtifactOnDeployment: prod ? lambda.UntrustedArtifactOnDeployment.ENFORCE : lambda.UntrustedArtifactOnDeployment.WARN,
     });
     const code = this.lambdaCode(props);
@@ -199,7 +196,7 @@ export class AppStack extends Stack {
       conditions: { StringEquals: { 'aws:SourceAccount': this.account } },
     }));
     const whatsappIntake = fn('whatsapp-intake', 'frontdesk.handlers.whatsapp_intake.handler', {
-      environment: { FRONTDESK_STATE_MACHINE_ARN: pipeline.stateMachineArn },
+      environment: { FRONTDESK_STATE_MACHINE_ARN: pipeline.stateMachineArn, FRONTDESK_WHATSAPP_TOPIC_ARN: whatsappTopic.topicArn },
     });
     pipeline.grantStartExecution(whatsappIntake);
     this.grantSsmRead(whatsappIntake, envName);
@@ -255,10 +252,14 @@ export class AppStack extends Stack {
     const accessLogs = new logs.LogGroup(this, 'ApiAccessLogs', { retention: logs.RetentionDays.TWO_WEEKS, encryptionKey: data.key });
     this.httpApi = new apigw.HttpApi(this, 'HttpApi', {
       apiName: `${prefix}-api`,
+      // Any origin may *call*; that is safe because nothing here uses cookies (the inbox sends
+      // a bearer token, the widget a public key). Which origin a widget key may be used from is
+      // enforced in the chat Lambda against the key's allow-list (frontdesk/routing.py).
       corsPreflight: {
-        allowOrigins: [`https://${props.webDomain}`, ...(prod ? [] : ['http://localhost:3000'])],
+        allowOrigins: ['*'],
         allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST],
         allowHeaders: ['authorization', 'content-type', 'x-frontdesk-widget-key'],
+        allowCredentials: false,
         maxAge: Duration.hours(1),
       },
     });
@@ -393,7 +394,6 @@ export class AppStack extends Stack {
     new CfnOutput(this, 'ChatSocketUrl', { value: wsStage.url });
     new CfnOutput(this, 'WhatsAppTopicArn', { value: whatsappTopic.topicArn, description: 'Set this as the event destination of the WhatsApp Business Account in End User Messaging Social' });
     new CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
-    new CfnOutput(this, 'SigningProfileName', { value: signingProfile.signingProfileName });
     new CfnOutput(this, 'PipelineArn', { value: pipeline.stateMachineArn });
 
     this.suppressions();

@@ -21,7 +21,9 @@ from .lint_migrations import CATALOG_SQL, lint_dir, rls_catalog_violations
 from .sqlsplit import split_sql
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
-MIGRATIONS = ROOT / "db" / "migrations"
+# In the Lambda package the SQL files are copied next to the code (scripts/build-lambda.sh).
+_PACKAGED = pathlib.Path(__file__).resolve().parents[1] / "migrations"
+MIGRATIONS = _PACKAGED if _PACKAGED.exists() else ROOT / "db" / "migrations"
 
 Exec = Callable[[str, dict[str, Any] | None], list[dict[str, Any]]]
 

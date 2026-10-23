@@ -26,4 +26,6 @@ paths = [
   '''security/gate-fixtures/''',
   '''backend/tests/test_redaction\.py''',
   '''evals/datasets/.*\.synthetic\.''',
+  # Public AWS Price List data; its SKU hashes look like generic API keys.
+  '''docs/evidence/pricing-snapshot\.json''',
 ]

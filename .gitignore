@@ -16,3 +16,6 @@ tools/pricing/.cache/
 reports/
 .DS_Store
 *.egg-info/
+apps/inbox/out/
+apps/inbox/next-env.d.ts.bak
+build/

@@ -5,7 +5,10 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { EnvName } from '../shared/config';
@@ -63,12 +66,20 @@ export class WebStack extends Stack {
         xssProtection: { protection: true, modeBlock: true, override: true },
       },
     });
+    // S3 has no directory index: /inbox/conversation/ must be served as .../index.html.
+    const indexRewrite = new cloudfront.Function(this, 'IndexRewrite', {
+      runtime: cloudfront.FunctionRuntime.JS_2_0,
+      code: cloudfront.FunctionCode.fromInline(
+        "function handler(event) { var r = event.request; if (r.uri.endsWith('/')) { r.uri += 'index.html'; } " +
+        "else if (r.uri.indexOf('.') === -1) { r.uri += '/index.html'; } return r; }"),
+    });
     this.distribution = new cloudfront.Distribution(this, 'Cdn', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.bucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         responseHeadersPolicy: headers,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        functionAssociations: [{ function: indexRewrite, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
       },
       defaultRootObject: 'inbox/index.html',
       priceClass: cloudfront.PriceClass.PRICE_CLASS_ALL,
@@ -83,6 +94,24 @@ export class WebStack extends Stack {
       { id: 'AwsSolutions-CFR2', reason: 'WAF is a "when a client pays" item (docs/ARCHITECTURE.md cost table).' },
       { id: 'AwsSolutions-CFR4', reason: 'The default *.cloudfront.net certificate allows TLSv1 at the viewer; a custom domain with ACM and TLS 1.2 minimum comes with the first client.' },
     ]);
+    NagSuppressions.addStackSuppressions(this, [
+      { id: 'AwsSolutions-IAM4', reason: 'CDK BucketDeployment custom resource uses AWSLambdaBasicExecutionRole.', appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'] },
+      { id: 'AwsSolutions-IAM5', reason: 'CDK BucketDeployment must write any key under the site prefix and read its asset bucket.' },
+      { id: 'AwsSolutions-L1', reason: 'CDK-managed BucketDeployment runtime.' },
+    ]);
+    const inboxOut = path.join(__dirname, '..', '..', '..', 'apps', 'inbox', 'out');
+    if (fs.existsSync(inboxOut)) {
+      // prune: false keeps inbox/config.json, which the App stack writes after this one.
+      new s3deploy.BucketDeployment(this, 'InboxSite', {
+        destinationBucket: this.bucket, destinationKeyPrefix: 'inbox', sources: [s3deploy.Source.asset(inboxOut)],
+        prune: false, distribution: this.distribution, distributionPaths: ['/inbox/*'],
+      });
+    }
+    new s3deploy.BucketDeployment(this, 'Widget', {
+      destinationBucket: this.bucket, destinationKeyPrefix: 'widget',
+      sources: [s3deploy.Source.asset(path.join(__dirname, '..', '..', '..', 'apps', 'widget'), { exclude: ['README.md'] })],
+    });
+
     new CfnOutput(this, 'WebDomain', { value: this.distribution.distributionDomainName });
     new CfnOutput(this, 'WebBucket', { value: this.bucket.bucketName });
   }

@@ -39,7 +39,7 @@ def database_name():
     except Exception as e:  # pragma: no cover - environment dependent
         pytest.skip(f"no test Postgres at {ADMIN_DSN}: {e}")
     name = f"frontdesk_test_{uuid.uuid4().hex[:8]}"
-    conn.execute(f'CREATE DATABASE "{name}"')
+    conn.execute(f'CREATE DATABASE "{name}"')  # nosemgrep: name is a generated uuid suffix, not input
     conn.close()
     from frontdesk.db.migrate import apply, local_runner
 
@@ -47,11 +47,11 @@ def database_name():
     run_tx, query = local_runner(admin_db_dsn)
     apply(run_tx, query)
     with _admin_connect(admin_db_dsn) as c:
-        c.execute(f"ALTER ROLE frontdesk_app PASSWORD '{APP_PASSWORD}'")
-        c.execute(f'GRANT CONNECT ON DATABASE "{name}" TO frontdesk_app')
+        c.execute(f"ALTER ROLE frontdesk_app PASSWORD '{APP_PASSWORD}'")  # nosemgrep: test-only constant
+        c.execute(f'GRANT CONNECT ON DATABASE "{name}" TO frontdesk_app')  # nosemgrep: generated name
     yield name
     with _admin_connect(ADMIN_DSN) as c:
-        c.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+        c.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')  # nosemgrep: generated name
 
 
 @pytest.fixture(scope="session")

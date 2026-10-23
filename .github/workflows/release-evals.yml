@@ -1,0 +1,69 @@
+# The production pipeline's scorecard: the same evaluation as CI, with Bedrock (Cohere embeddings
+# and rerank, Claude, Guardrails) in eu-central-1, gated on the Bedrock floors in docs/PLAN.md.
+# Then the red-team suite against the deployed dev chat API through promptfoo.
+name: release-evals
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bedrock-evals:
+    if: ${{ vars.AWS_EVALS_ROLE != '' }}
+    runs-on: ubuntu-24.04
+    environment: evals
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_PASSWORD: ci-only }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      FRONTDESK_TEST_ADMIN_DSN: postgresql://postgres:ci-only@localhost:5432/postgres
+      FRONTDESK_AI_REGION: eu-central-1
+      FRONTDESK_GUARDRAIL_ID: ${{ vars.DEV_GUARDRAIL_ID }}
+      FRONTDESK_GUARDRAIL_VERSION: ${{ vars.DEV_GUARDRAIL_VERSION }}
+      FRONTDESK_MODEL_SMALL: ${{ vars.MODEL_SMALL || 'eu.anthropic.claude-haiku-5-5' }}
+      FRONTDESK_MODEL_LARGE: ${{ vars.MODEL_LARGE || 'eu.anthropic.claude-sonnet-5-5' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13", cache: pip }
+      - run: pip install -e "backend[dev]" -e "ml[dev]"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_EVALS_ROLE }}
+          aws-region: eu-central-1
+          role-session-name: gh-evals-${{ github.run_id }}
+      - name: Evaluate the Bedrock pipeline
+        run: |
+          python -m frontdesk_ml.run_evals --pipeline bedrock --out reports/bedrock
+          cat reports/bedrock/eval-report.md >> "$GITHUB_STEP_SUMMARY"
+          python -m frontdesk_ml.gates --pipeline bedrock --metrics reports/bedrock/metrics.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with: { name: bedrock-eval-report, path: reports/bedrock, retention-days: 400 }
+
+  redteam-deployed:
+    if: ${{ vars.DEV_CHAT_URL != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.13" }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "22" }
+      - run: pip install -e backend -e ml && python -m frontdesk_ml.redteam --export-promptfoo promptfooconfig.yaml
+      - name: promptfoo against the deployed dev chat API
+        env:
+          FRONTDESK_CHAT_URL: ${{ vars.DEV_CHAT_URL }}
+          FRONTDESK_REDTEAM_WIDGET_KEY: ${{ vars.DEV_REDTEAM_WIDGET_KEY }}
+        run: npx --yes promptfoo@0.124.0 eval -c promptfooconfig.yaml --no-cache --output promptfoo-results.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with: { name: promptfoo-results, path: promptfoo-results.json, retention-days: 400 }

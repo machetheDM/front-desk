@@ -1,0 +1,20 @@
+:root { --bg: #f7f7f5; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e1dc; --accent: #1f6f50; --warn: #a33b1f; --card: #fff; }
+@media (prefers-color-scheme: dark) { :root { --bg: #151514; --fg: #ecebe6; --muted: #a3a29c; --line: #2c2c29; --accent: #57b88f; --warn: #e07a5f; --card: #1d1d1b; } }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+header { display: flex; gap: 16px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+header a { color: var(--fg); text-decoration: none; } header a.active { font-weight: 600; color: var(--accent); }
+header .who { margin-left: auto; color: var(--muted); font-size: 13px; }
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+.muted { color: var(--muted); } .reason { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
+.msg { padding: 8px 12px; border-radius: 8px; margin: 6px 0; max-width: 80%; white-space: pre-wrap; }
+.msg.in { background: var(--line); } .msg.out { background: color-mix(in srgb, var(--accent) 14%, transparent); margin-left: auto; }
+.redacted { font-size: 12px; color: var(--muted); }
+textarea { width: 100%; min-height: 80px; font: inherit; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+button.secondary { background: transparent; color: var(--accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.big { font-size: 28px; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; } td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.error { color: var(--warn); }

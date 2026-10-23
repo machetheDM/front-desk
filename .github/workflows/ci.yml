@@ -176,5 +176,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: All gates green
+        env:
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          echo '${{ toJSON(needs) }}' | python3 -c "import json,sys; n=json.load(sys.stdin); bad=[k for k,v in n.items() if v['result']!='success']; print('failed:',bad); sys.exit(1 if bad else 0)"
+          python3 -c "import json,os,sys; n=json.loads(os.environ['NEEDS']); bad=[k for k,v in n.items() if v['result']!='success']; print('failed:',bad); sys.exit(1 if bad else 0)"

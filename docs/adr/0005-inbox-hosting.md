@@ -18,3 +18,11 @@ authorizer.
 ## Consequences
 No server-side rendering, which the inbox does not need. Cheaper and fewer moving parts than
 Amplify. Revisit if we need SSR.
+
+## Addendum (2026-10-23): Pages Router and the CSP
+
+The CloudFront policy is `script-src 'self'`. Next.js App Router exports, and Turbopack builds,
+emit inline bootstrap scripts that this policy blocks. The inbox therefore uses the Pages Router
+with the webpack build, whose export has only external scripts and a non-executable JSON data
+tag. `apps/inbox/scripts/check-no-inline-scripts.mjs` fails the build if an inline script
+appears, so nobody is tempted to weaken the policy instead.

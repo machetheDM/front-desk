@@ -3,7 +3,7 @@
 Scope: Front Desk as deployed per `docs/ARCHITECTURE.md`. Method: STRIDE per trust boundary,
 then AI-specific threats, then attack trees for the three outcomes that would end the business.
 Each threat names its control and the evidence (test, rule, or detection) that the control works.
-Living document: reviewed at the end of each phase; last review Phase 0 (draft), updates per phase below.
+Living document: reviewed at the end of each phase; last review Phase 2.
 
 ## 1. Assets
 
@@ -33,11 +33,12 @@ another country; TB4 Lambda to database (tenant boundary enforced here); TB5 CI 
 
 | ID | Boundary | Threat | Control | Evidence |
 |---|---|---|---|---|
-| S-01 | TB1 | Spoofed website widget posts as another tenant | Widget key maps to one tenant in SSM; origin allow-list per key | `test_web_chat.py::test_a_widget_key_only_reaches_its_own_tenant` |
-| S-02 | TB2 | Forged WhatsApp event sent to our SNS topic | Topic policy allows only `social-messaging.amazonaws.com` from our account; SNS signature verified in intake | `test_sns_verify.py`, DET-08 |
+| S-01 | TB1 | Spoofed website widget posts as another tenant | Widget key maps to one tenant in SSM; origin allow-list per key | `test_channels.py::test_a_widget_key_only_reaches_its_own_tenant_and_only_from_allowed_origins` |
+| S-06 | TB1 | Another website reuses a tenant's public widget key | Key bound to an origin allow-list, checked server-side; CORS is open because no endpoint uses cookies | `test_handlers_wiring.py::test_the_web_chat_handler_answers_a_visitor_from_an_allowed_origin` |
+| S-02 | TB2 | Forged WhatsApp event sent to our SNS topic | Topic policy allows only `social-messaging.amazonaws.com` from our account; SNS signature verified in intake | `test_channels.py` (SNS signature tests), DET-08 |
 | S-03 | TB6 | Stolen staff password | Cognito MFA required (TOTP), no self sign-up, 12+ char passwords | `stacks.test.ts` MFA assertion |
 | S-04 | TB5 | Workflow on a fork or feature branch assumes the prod role | OIDC trust pinned to `environment:prod`, which needs a reviewer | `stacks.test.ts` OIDC assertion |
-| S-05 | TB1 | Inbound integration webhook (client system) forged | HMAC-SHA256 with timestamp, 5-minute window, constant-time compare | `test_webhook_signature.py` |
+| S-05 | TB1 | Inbound integration webhook (client system) forged | HMAC-SHA256 with timestamp, 5-minute window, constant-time compare | `test_channels.py::test_webhook_signatures_reject_forgery_and_replay` |
 | T-01 | TB4 | Tenant A modifies tenant B's rows | RLS `WITH CHECK`, composite FKs with tenant_id | `test_tenant_isolation.py` |
 | T-02 | all | Audit log or event stream rewritten to hide activity | Append-only triggers (even for owner), no UPDATE/DELETE grants, CloudTrail with Object Lock | `test_audit.py`, `scp.test.ts` |
 | T-03 | TB5 | Malicious dependency or tampered Lambda package | Trivy, SBOM, pinned actions by SHA, AWS Signer with ENFORCE in prod | CI `security` job, `stacks.test.ts` signing assertion |
@@ -49,7 +50,7 @@ another country; TB4 Lambda to database (tenant boundary enforced here); TB5 CI 
 | I-03 | all | PII in logs | Semgrep rule bans logging bodies; Step Functions logs no execution data | `frontdesk-message-text-in-logs`, cfn-guard rule |
 | I-04 | TB1 | System prompt extracted | Canary token in prompt; validator blocks output containing it | DET-11, red-team leakage cases |
 | I-05 | TB6 | Insider bulk-reads transcripts | Per-staff read counter raises DET-05 | `test_inbox_api.py::test_unusual_read_volume_raises_an_event` |
-| D-01 | TB1 | Flood of messages runs up Bedrock and WhatsApp cost | Per-number and per-tenant rate limits; stage throttling; monthly token cap; budgets | `test_ratelimit.py`, DET-09, Budgets |
+| D-01 | TB1 | Flood of messages runs up Bedrock and WhatsApp cost | Per-number and per-tenant rate limits; stage throttling; monthly token cap; budgets | `test_pipeline.py::test_a_sender_flooding_the_number_is_rate_limited`, DET-09, Budgets |
 | D-02 | TB3 | Bedrock outage stops the business | Degraded mode: messages still stored, customer told a person will reply, inbox works | `test_degraded_mode.py`, Step Functions Catch, DET-06 |
 | E-01 | TB4 | App role escalates (disable RLS, set role) | App role owns nothing, NOBYPASSRLS, no DDL rights | `test_tenant_isolation.py::test_the_app_role_cannot...` |
 | E-02 | all | Workload role creates IAM users or roles | Permission boundary denies `iam:*`; SCP denies users/keys | `stacks.test.ts`, `scp.test.ts` |
