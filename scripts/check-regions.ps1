@@ -2,6 +2,7 @@
 .SYNOPSIS
   Settles the "verify" rows of the region matrix (docs/ARCHITECTURE.md section 2) against the
   real AWS account, and writes docs/evidence/region-check.json.
+  SEAM(region-check): needs the owner's account; commit the file it writes.
 
 .DESCRIPTION
   Run after Identity Center is set up (docs/DEPLOY.md step 14). Read-only: it only lists and

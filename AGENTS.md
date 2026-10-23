@@ -39,7 +39,7 @@ leaves evidence: a measured number, a documented threat, a test that fails the b
 
 | Rule | Where it is enforced | Proof |
 |---|---|---|
-| Tenant isolation below the app | Postgres RLS on every business table, `FORCE ROW LEVEL SECURITY`, app role is not owner | `backend/tests/test_tenant_isolation.py`, `db/lint_migrations.py` |
+| Tenant isolation below the app | Postgres RLS on every business table, `FORCE ROW LEVEL SECURITY`, app role is not owner | `backend/tests/test_tenant_isolation.py`, `backend/frontdesk/db/lint_migrations.py` |
 | A new table without RLS fails | Migration linter + catalog check | `backend/tests/test_migration_lint.py` |
 | Reads are audited, audit is append-only | `audit_log` with trigger rejecting UPDATE/DELETE, read paths call `audit.record_read` | `backend/tests/test_audit.py` |
 | Conversations are events | `conversation_events`; dashboards computed from events | `backend/tests/test_insights.py` |

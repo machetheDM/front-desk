@@ -48,7 +48,7 @@ whoever answers the WhatsApp today.
 | **3. WhatsApp and detection** | WhatsApp through End User Messaging Social, signature checks, rate limits, consent and opt-out; detection rules and runbooks; ZAP scan in CI | Live number on the demo tenant; detections fire in a test | Done in code; live number needs Meta verification |
 | **4. AI security and ML** | Red-team suite (direct, indirect injection, leakage canaries) as a build gate; OWASP LLM and ATLAS mapping; trained handoff/intent model vs LLM; model card; "model down, inbox works" drill | Attack success rate per release; model comparison table | Done offline; LLM column needs Bedrock |
 | **5. Insights and production** | Intent clustering, rates with confidence intervals, volume forecast, A/B testing; Iceberg analytics with Athena; signed Lambda code with canary deploys and rollback; backup/restore drill; incident drill; POPIA deletion across embeddings; Well-Architected review | Restore and rollback timed and written down; WA risks closed or accepted | Done: drills run in CI, WA review has no open HRI; AWS restore timing needs the dev account |
-| **6. Pilot and case study** | Discovery workshop, pilot charter, one real integration behind an adapter, 30 days live, ROI sheet, handover pack | Case study with the client's permission | Templates done; needs a client |
+| **6. Pilot and case study** | Discovery workshop, pilot charter, one real integration behind an adapter, 30 days live, ROI sheet, handover pack | Case study with the client's permission | Engagement pack, integration kit, offboarding and computed ROI done; 30 days live and the case study need a client |
 
 ## 5. Quality floors (the build fails below these)
 

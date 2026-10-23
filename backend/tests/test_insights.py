@@ -8,7 +8,8 @@ import uuid
 import pytest
 
 from frontdesk import insights, pipeline, services
-from frontdesk.tenancy import create_tenant
+from frontdesk.retrieval.ingest import review_by
+from frontdesk.tenancy import DEMO_TENANT_ID, create_tenant
 
 pytestmark = pytest.mark.db
 
@@ -35,3 +36,18 @@ def test_the_owner_summary_is_computed_from_events_and_follows_them(demo_db):
         conv = tx.scalar("SELECT conversation_id::text FROM app.conversations LIMIT 1")
         tx.execute("INSERT INTO app.conversation_events (tenant_id, conversation_id, type, payload) VALUES (app.current_tenant(), :c, 'message_received', '{\"message_id\": \"x\"}')", {"c": conv})
         assert insights.summary(tx, since=dt.datetime(2026, 10, 1, tzinfo=dt.UTC))["messages_received"] == 4
+
+
+def test_documents_past_or_near_their_review_date_are_listed_for_the_owner(demo_db):
+    with demo_db.transaction(DEMO_TENANT_ID) as tx:
+        early = insights.documents_due(tx, dt.date(2026, 10, 1))
+        soon = insights.documents_due(tx, dt.date(2026, 10, 25))
+        late = insights.documents_due(tx, dt.date(2026, 11, 5))
+    assert [d["title"] for d in early] == []
+    assert soon == [{"title": "Price list", "review_by": "2026-11-01", "overdue": False}]
+    assert late[0] == {"title": "Price list", "review_by": "2026-11-01", "overdue": True}
+
+
+def test_a_document_without_a_review_date_gets_six_months():
+    assert review_by({}, today=dt.date(2026, 10, 23)) == dt.date(2027, 4, 23)
+    assert review_by({"review_by": "2027-01-31"}) == dt.date(2027, 1, 31)

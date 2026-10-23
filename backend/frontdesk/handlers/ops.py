@@ -97,14 +97,15 @@ def drift(event, context):
     """Weekly (Monday 07:00 SAST): PSI on each tenant's intent mix. A metric per tenant for the
     dashboard, one per environment (the maximum) for the DET-12 alarm, and no text anywhere."""
     from .. import drift as drift_mod
-    from .. import telemetry
+    from .. import insights, telemetry
     from .common import db
 
     out, worst = {}, 0.0
     for tid in routing.tenant_ids():
         with db().transaction(tid) as tx:
             r = drift_mod.weekly(tx)
-        out[str(tid)] = {"psi": r["psi"], "level": r["level"], "current_messages": r["current_messages"]}
+            shadow = insights.shadow_agreement(tx, dt.datetime.now(dt.UTC) - dt.timedelta(days=7))
+        out[str(tid)] = {"psi": r["psi"], "level": r["level"], "current_messages": r["current_messages"], "shadow": shadow}
         if r["level"] != "too few to judge":
             telemetry.metric("IntentMixPsi", r["psi"], "None", Tenant=str(tid)[:8])
             worst = max(worst, r["psi"])

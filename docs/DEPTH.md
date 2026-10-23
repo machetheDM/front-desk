@@ -4,7 +4,7 @@ An item is **done** only when its evidence exists and the link below opens it. *
 the code is written and tested against fakes, and the remaining step needs an AWS account, a
 real client or a paid service; the seam is named. **Open** means not yet built.
 
-Last updated: Phase 5 complete, 23 October 2026.
+Last updated: Phase 6 complete as far as it can go without a client, 23 October 2026.
 
 ## AI / ML engineering
 
@@ -36,9 +36,9 @@ Last updated: Phase 5 complete, 23 October 2026.
 
 | Item | Status | Evidence |
 |---|---|---|
-| WhatsApp intake end to end (verify, route, store, start with ids only) | done; live number is a seam (Meta verification) | `test_whatsapp_and_marketing.py::test_the_intake_lambda...` |
-| 24-hour window and approved templates | done; template approval is a seam | `inbox_api.reply`, `send_followup_template`, `channels/whatsapp.py` |
-| Consent and opt-out, marketing opt-in separate | done | `consent.py`, `marketing.py`, `test_whatsapp_and_marketing.py` |
+| WhatsApp intake end to end (verify, route, store, start with ids only) | done; the live number and a real event are SEAM(live-whatsapp-event) (Meta verification) | `test_whatsapp_and_marketing.py::test_the_intake_lambda...` |
+| 24-hour window and approved templates | done; Meta's template approval is SEAM(meta-template-approval) | `inbox_api.reply`, `send_followup_template`, `channels/whatsapp.py` |
+| Consent and opt-out, marketing opt-in separate | done; sending marketing needs an approved marketing template, SEAM(meta-marketing-template) | `consent.py`, `marketing.py`, `test_whatsapp_and_marketing.py` |
 | Pinned Python dependencies in SBOM and Trivy | done | `requirements/`, CI `security` job |
 
 ## Phase 4 additions
@@ -58,6 +58,17 @@ Last updated: Phase 5 complete, 23 October 2026.
 | Operations dashboard | done | `app-stack.ts` `Operations`, `stacks.test.ts` "operations dashboard" |
 | Every PowerShell script and documented block parsed in CI | done | `scripts/ci/check-powershell.ps1`, CI `security` job |
 | Breach notice template (POPIA s21 to the client, s22(5) contents) | done | `docs/engagement/breach-notice-template.md` |
+
+## Phase 6 additions
+
+| Item | Status | Evidence |
+|---|---|---|
+| Replay of a real client's chats on a laptop, end to end, non-demo tenant | done (run on a made-up client) | `docs/engagement/onboarding-checklist.md` part A; `admin create-tenant/create-staff --dsn` |
+| Offboarding: hashed export, erase only after export and pause, certificate | done; Athena rows are SEAM(offboard-athena) | `backend/frontdesk/offboarding.py`, `test_offboarding.py` |
+| Document review dates shown to the owner | done | `db/migrations/0009_document_review_dates.sql`, `insights.documents_due`, `test_insights.py` |
+| Every documented admin command parses with the real CLI | done (found that every command failed before) | `backend/tests/test_admin_cli.py` |
+| Shadow classifier agreement for the operator, weekly | done | `insights.shadow_agreement`, `handlers/ops.drift`, `test_classifier.py` |
+| 30 days live with a client and a published case study | needs a client | `docs/engagement/pilot-charter.md`, `case-study-template.md` |
 
 ## Machine learning beyond the LLM
 
@@ -84,6 +95,7 @@ Last updated: Phase 5 complete, 23 October 2026.
 
 | Item | Status | Evidence |
 |---|---|---|
+| Region matrix checked, not guessed | done from the AWS Price List API; the run against the real account is SEAM(region-check) | `docs/ARCHITECTURE.md`, `docs/evidence/pricing-snapshot.json`, `scripts/check-regions.ps1` |
 | Organizations: management, security, log-archive, dev, prod | done in code, seam (owner deploys) | `infra/lib/org/organization-stack.ts`, `stacks.test.ts` "organization" |
 | SCPs in code with tests | done | `infra/policies/scp/*.json`, `infra/test/scp.test.ts` (17 tests) |
 | IAM Identity Center with MFA, no IAM users | done (runbook), SCP enforced | `docs/DEPLOY.md` steps 4, 5, 10; SCP `deny-long-lived-credentials` |
@@ -137,6 +149,6 @@ Last updated: Phase 5 complete, 23 October 2026.
 |---|---|---|
 | ADRs for real decisions | done (8) | `docs/adr/` |
 | Replay owner report | done | `docs/evidence/replay-demo-offline/owner-report.md` |
-| Discovery workshop, pilot charter, ROI sheet, handover pack, case study | Phase 6 | |
+| Discovery workshop, pilot charter, ROI sheet, handover pack, case study | done as templates; the ROI sheet is computed (`python -m frontdesk_ml.roi`, low case shown); the case study needs a client | `docs/engagement/`, `ml/tests/test_roi.py` |
 | Well-Architected review | done: six pillars and the Generative AI Lens, no open HRI | `docs/WELL-ARCHITECTED.md` |
-| One real integration behind an adapter | adapter done, seam (needs a client) | `integrations/orders.py` (`HttpOrdersAdapter`, SEAM(client-order-api)) |
+| One real integration behind an adapter | done to the boundary: contract, conformance kit tested against a reference server and a broken one, SSM secret, failure hands over; a real client's API is SEAM(client-order-api) | `docs/engagement/integration-contract.md`, `integrations/conformance.py`, `test_integration_orders.py` |

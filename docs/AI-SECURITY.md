@@ -5,8 +5,8 @@ and models that shape the reply. Companion to `docs/THREAT-MODEL.md` (threats AI
 and `docs/MODEL-CARD.md`. Reviewed at the end of Phase 4, 23 October 2026.
 
 Sources used for the mapping: OWASP Top 10 for LLM Applications 2025; MITRE ATLAS technique
-and mitigation names taken from the published ATLAS data (`mitre-atlas/atlas-data`,
-`dist/ATLAS.yaml`, version 5.6.0), not from memory. `ml/tests/test_redteam_suite.py` fails the
+and mitigation names taken from the published ATLAS data (the mitre-atlas/atlas-data
+repository, file dist/ATLAS.yaml, version 5.6.0), not from memory. `ml/tests/test_redteam_suite.py` fails the
 build if a red-team case carries an OWASP or ATLAS id that this page does not map.
 
 ## 1. The layers, in the order a message meets them
@@ -43,7 +43,7 @@ assumes the one before it failed.
 | **LLM06 Excessive Agency** | The model books, refunds or discounts | Tools are read-only lookups or raise a callback request; commitments only through allow-listed tools; every tool call recorded | rt14 to rt20; `test_agent_tools.py::test_asking_for_a_site_assessment_raises_a_callback_request_and_books_nothing` | None known; adding a write tool reopens this row |
 | **LLM07 System Prompt Leakage** | The prompt is copied by a rival | The prompt holds no secrets; a canary token in it; validator and DET-11 catch the canary in output | rt10 to rt13; `test_validate.py::test_the_canary_is_never_sent` | A paraphrased leak without the canary is possible and harmless (no secrets) |
 | **LLM08 Vector and Embedding Weaknesses** | Retrieval returns a rival tenant's price list | Embeddings stored in the same RLS-protected rows as the text; no shared index | rt21, rt22; `test_tenant_isolation.py::test_a_document_chunk_from_tenant_a_is_never_retrieved_for_tenant_b` | Embedding inversion is irrelevant: vectors never leave the database |
-| **LLM09 Misinformation** | An invented price, date or policy; the assistant claiming to be a person or guessing a title | No source, no answer; numbers must appear in the cited text; contextual grounding; first message discloses the assistant; titles rejected | rt09, rt34 to rt36, rt38 to rt40; `test_validate.py::test_a_price_that_is_not_in_the_cited_source_is_rejected`; groundedness floor in `docs/PLAN.md` | Correct citation of an out-of-date document: documents carry a review date in the onboarding checklist |
+| **LLM09 Misinformation** | An invented price, date or policy; the assistant claiming to be a person or guessing a title | No source, no answer; numbers must appear in the cited text; contextual grounding; first message discloses the assistant; titles rejected | rt09, rt34 to rt36, rt38 to rt40; `test_validate.py::test_a_price_that_is_not_in_the_cited_source_is_rejected`; groundedness floor in `docs/PLAN.md` | Correct citation of an out-of-date document: every document carries a `review_by` date (six months if none is given) and the owner's insights list those due (`insights.documents_due`, `test_insights.py`) |
 | **LLM10 Unbounded Consumption** | A flood of long messages runs up Bedrock and WhatsApp bills | L2; per-tenant monthly token cap (Claude bills through Marketplace, so a Budgets filter alone misses it); stage throttling; Budgets alarms | rt37; `test_metering_and_router.py::test_a_tenant_over_its_monthly_cap_is_detected`; `budgets-stack.ts` | A distributed flood within the per-sender limit is capped by the tenant limit, not prevented |
 
 ## 3. MITRE ATLAS techniques (names from ATLAS data 5.6.0)

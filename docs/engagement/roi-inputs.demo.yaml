@@ -1,0 +1,15 @@
+# ROI inputs for the demo tenant. Volumes come from the replay (measured); everything below is
+# an assumption the owner states in the discovery workshop, each with where it came from.
+# Low / mid / high are the range to show, never a single number.
+# Checked by: python -m frontdesk_ml.roi docs/engagement/roi-inputs.demo.yaml
+tenant: Bushveld Solar & Electrical (made-up demo company)
+replay: docs/evidence/replay-demo-offline/replay.jsonl
+replay_days: 30
+monthly_service_cost_zar: {value: 1089, source: "docs/ARCHITECTURE.md pilot scenario (AWS and WhatsApp fees passed through)"}
+assumptions:
+  staff_minutes_per_routine_answer: {low: 2, mid: 3, high: 5, source: "owner's estimate in the discovery workshop (demo)"}
+  staff_cost_per_hour_zar: {low: 60, mid: 80, high: 110, source: "owner's payroll, sales assistant (demo)"}
+  sales_intents: {value: [pricing, installation, service_area, booking], source: "intents that are buying questions"}
+  lead_to_sale_rate: {low: 0.05, mid: 0.10, high: 0.15, source: "owner's quote-to-sale records (demo)"}
+  extra_sales_from_instant_after_hours_reply: {low: 0.00, mid: 0.10, high: 0.20, source: "assumption: share of after-hours leads that would have gone elsewhere; the pilot measures it against the owner's sales records"}
+  gross_margin_per_sale_zar: {low: 4000, mid: 6000, high: 9000, source: "owner's margin on a typical install (demo)"}

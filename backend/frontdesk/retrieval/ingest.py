@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import pathlib
 import uuid
 from dataclasses import dataclass
@@ -21,6 +22,19 @@ class SourceDoc:
     parsed: ParsedDoc
 
 
+DEFAULT_REVIEW = dt.timedelta(days=182)
+
+
+def review_by(meta: dict, today: dt.date | None = None) -> dt.date:
+    """`review_by: 2027-03-31` in the front matter, else six months from loading."""
+    v = meta.get("review_by")
+    if isinstance(v, dt.date):
+        return v
+    if v:
+        return dt.date.fromisoformat(str(v))
+    return (today or dt.date.today()) + DEFAULT_REVIEW
+
+
 def read_docs(paths: list[pathlib.Path], uri_prefix: str = "file://") -> list[SourceDoc]:
     out = []
     for p in sorted(paths):
@@ -35,7 +49,7 @@ def plan_ingest(tenant_id: uuid.UUID, docs: list[SourceDoc], embedder: Embedder,
     items = []
     for d in docs:
         flagged = [c.ordinal for c in d.parsed.chunks if scan(f"{c.heading} {c.text}")]
-        items.append(f"{d.uri}: '{d.parsed.title}', {len(d.parsed.chunks)} chunks, sha256 {d.parsed.sha256[:12]}"
+        items.append(f"{d.uri}: '{d.parsed.title}', {len(d.parsed.chunks)} chunks, sha256 {d.parsed.sha256[:12]}, review by {review_by(d.parsed.meta)}"
                      + ("" if approved_by else " (NOT approved: will not be retrievable)")
                      + (f" QUARANTINED chunks {flagged}: review before they can be retrieved" if flagged else ""))
 
@@ -62,10 +76,10 @@ def plan_ingest(tenant_id: uuid.UUID, docs: list[SourceDoc], embedder: Embedder,
                 # A new version replaces the old one for retrieval; the old row stays for audit.
                 tx.execute("UPDATE app.documents SET approved = false WHERE source_uri = :u", {"u": d.uri})
             doc_id = tx.scalar(
-                """INSERT INTO app.documents (tenant_id, title, source_uri, content_sha256, version, approved, approved_by, approved_at)
-                   VALUES (app.current_tenant(), :t, :u, :h, :v, :a, :by, CASE WHEN :a THEN now() END) RETURNING document_id""",
+                """INSERT INTO app.documents (tenant_id, title, source_uri, content_sha256, version, approved, approved_by, approved_at, review_by)
+                   VALUES (app.current_tenant(), :t, :u, :h, :v, :a, :by, CASE WHEN :a THEN now() END, :r::date) RETURNING document_id""",
                 {"t": d.parsed.title, "u": d.uri, "h": d.parsed.sha256, "v": version,
-                 "a": approved_by is not None, "by": approved_by},
+                 "a": approved_by is not None, "by": approved_by, "r": review_by(d.parsed.meta).isoformat()},
             )
             vectors = embedder.embed([embedding_text(d.parsed.title, c) for c in d.parsed.chunks], kind="document")
             for c, v in zip(d.parsed.chunks, vectors):

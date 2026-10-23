@@ -39,9 +39,40 @@ def summary(tx: Transaction, since: dt.datetime, until: dt.datetime | None = Non
         "top_intents": Counter(_p(e).get("intent", "general") for e in answered + handed).most_common(8),
         "handoff_reasons": Counter(_p(e).get("reason") for e in handed).most_common(),
         "unanswered_questions": [g["q"] for g in gaps][:20],
+        "documents_due_for_review": documents_due(tx, until.date()),
     }
+
+
+def documents_due(tx: Transaction, today: dt.date, within_days: int = 14) -> list[dict]:
+    """Approved documents whose review date has passed or is within two weeks."""
+    rows = tx.execute(
+        """SELECT title, review_by FROM app.documents
+           WHERE approved AND review_by IS NOT NULL AND review_by <= :d ORDER BY review_by, title""",
+        {"d": today + dt.timedelta(days=within_days)})
+    return [{"title": r["title"], "review_by": str(r["review_by"]), "overdue": str(r["review_by"]) < today.isoformat()} for r in rows]
 
 
 def _p(e: dict) -> dict:
     p = e["payload"]
     return p if isinstance(p, dict) else __import__("json").loads(p)
+
+
+def shadow_agreement(tx: Transaction, since: dt.datetime, until: dt.datetime | None = None) -> dict:
+    """How often the shadow classifier agreed with what the agent did (docs/MODEL-CARD.md
+    section 6). Disagreements where the agent answered but the model wanted a person are the
+    cases worth reading: they are where a retrained model could add something."""
+    until = until or dt.datetime.now(dt.UTC)
+    rows = tx.execute(
+        """SELECT type, payload->>'intent' AS intent, payload->'shadow' AS shadow FROM app.conversation_events
+           WHERE payload ? 'shadow' AND occurred_at >= :s AND occurred_at < :u""", {"s": since, "u": until})
+    scored = [r for r in rows if isinstance(r["shadow"], dict) and "would_hand_over" in r["shadow"]]
+    if not scored:
+        return {"messages": 0}
+    acted = [r["type"] in ("handed_over", "refused", "degraded") for r in scored]
+    wanted = [bool(r["shadow"]["would_hand_over"]) for r in scored]
+    n = len(scored)
+    return {"messages": n,
+            "handoff_agreement": round(sum(a == w for a, w in zip(acted, wanted)) / n, 3),
+            "intent_agreement": round(sum(r["shadow"].get("intent") == r["intent"] for r in scored) / n, 3),
+            "model_wanted_a_person_agent_answered": sum(w and not a for a, w in zip(acted, wanted)),
+            "agent_handed_over_model_did_not": sum(a and not w for a, w in zip(acted, wanted))}

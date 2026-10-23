@@ -5,8 +5,8 @@ message, exactly like degraded mode, and STOP and opt-in still work (consent is 
 Used when the assistant itself is the problem: it is answering wrongly at scale, a document
 turns out to be poisoned, or the client asks for it to stop (docs/INCIDENT-PLAN.md step 2).
 
-    python -m frontdesk.admin pause-assistant --tenant <uuid> --reason "INC-2026-11-02 wrong prices" --dry-run
-    python -m frontdesk.admin resume-assistant --tenant <uuid> --reason "prices fixed and evals rerun" --dry-run
+    python -m frontdesk.admin pause-assistant --profile fd-prod --tenant <uuid> --reason "INC-2026-11-02 wrong prices" --by "Machethe DM" --dry-run
+    python -m frontdesk.admin resume-assistant --profile fd-prod --tenant <uuid> --reason "prices fixed and evals rerun" --by "Machethe DM" --dry-run
 
 It lives in `app.tenant_config` (key `assistant_mode`), so it takes effect on the next message
 with no deploy, and each change is written to the append-only audit log with who and why.

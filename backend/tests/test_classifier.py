@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import uuid
 import pathlib
 
 import pytest
@@ -100,3 +101,19 @@ def test_the_shadow_prediction_reaches_the_event_payload_without_any_customer_te
     shadow = payload["shadow"]
     assert set(shadow) == {"version", "p_needs_person", "would_hand_over", "reason", "intent", "intent_confidence"}
     assert all(not isinstance(v, str) or len(v) < 40 for v in shadow.values())
+
+
+@pytest.mark.db
+def test_the_operator_can_see_how_often_the_shadow_model_agreed_with_the_agent(demo_db):
+    from frontdesk import insights
+
+    with demo_db.transaction(DEMO_TENANT_ID) as tx:
+        start = tx.scalar("SELECT clock_timestamp()")  # the database's clock, so earlier tests' events fall outside
+    for text in ("I want to talk to a person", "How much is the Home 5kW backup package?"):
+        rec = pipeline.receive(demo_db, pipeline.Inbound(DEMO_TENANT_ID, "web", f"web:{uuid.uuid4().hex}", text, None, None))
+        pipeline.answer(demo_db, services.build("offline"), DEMO_TENANT_ID, rec)
+    with demo_db.transaction(DEMO_TENANT_ID) as tx:
+        a = insights.shadow_agreement(tx, start)
+    assert a["messages"] == 2
+    assert 0.0 <= a["handoff_agreement"] <= 1.0 and 0.0 <= a["intent_agreement"] <= 1.0
+    assert a["model_wanted_a_person_agent_answered"] + a["agent_handed_over_model_did_not"] <= 2

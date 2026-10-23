@@ -38,11 +38,12 @@ def test_the_backup_restore_drill_restores_a_safe_copy_and_catches_a_broken_one(
 
 
 def test_the_analytics_export_carries_ids_and_decisions_but_no_text(demo_db):
-    rec = pipeline.receive(demo_db, pipeline.Inbound(DEMO_TENANT_ID, "web", "web:export-test", "my number is 082 555 1234, how much is the 3kW?", "Test"))
+    rec = pipeline.receive(demo_db, pipeline.Inbound(DEMO_TENANT_ID, "web", "web:export-test", "I'm Zanele, my number is 082 555 1234, how much is the 3kW?", "Zanele"))
     pipeline.answer(demo_db, services.build("offline"), DEMO_TENANT_ID, rec)
     now = dt.datetime.now(dt.UTC)
     rows = export_rows(demo_db, DEMO_TENANT_ID, now - dt.timedelta(minutes=5), now + dt.timedelta(minutes=1))
     mine = [r for r in rows if r["conversation_id"] == rec.conversation_id]
-    assert {r["type"] for r in mine} == {"message_received", "answer_sent"}
+    assert len(mine) == 2 and mine[0]["type"] == "message_received"  # then its outcome, answered or handed over
     assert set(mine[0]) == {"event_id", "conversation_id", "type", "occurred_at", "route", "intent", "after_hours", "first_reply_seconds", "tenant_id"}
-    assert "555" not in str(rows)
+    exported = str(rows)  # digits alone could collide with timestamps; the number and the name cannot
+    assert "082 555 1234" not in exported and "0825551234" not in exported and "Zanele" not in exported

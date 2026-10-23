@@ -1,6 +1,7 @@
 ---
 title: Price list
 approved_by: Owner (demo)
+review_by: 2026-11-01
 ---
 # Bushveld Solar & Electrical price list
 

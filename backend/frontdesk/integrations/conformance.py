@@ -58,19 +58,20 @@ def run(base_url: str, secret: bytes, test_ref: str, test_number: str, *, allow_
     except ValueError as e:
         return [Check("uses HTTPS", False, str(e))]
 
-    t0 = time.perf_counter()
-    try:
-        mine = adapter.status(test_ref, requester_address=test_number)
-        took = time.perf_counter() - t0
-        checks.append(Check("the order is told to the number on it", mine is not None and bool(mine.status), repr(mine)))
-        checks.append(Check(f"answers within {TIMEOUT_S:g} seconds", took < TIMEOUT_S, f"{took:.2f} s"))
-    except Exception as e:  # noqa: BLE001 -- report, do not stop
-        checks.append(Check("the order is told to the number on it", False, f"{type(e).__name__}: {e}"))
+    def lookup(name: str, ref: str, number: str, want_found: bool) -> float:
+        t0 = time.perf_counter()
+        try:
+            got = adapter.status(ref, requester_address=number)
+            ok = (got is not None and bool(got.status)) if want_found else got is None
+            checks.append(Check(name, ok, repr(got)))
+        except Exception as e:  # noqa: BLE001 -- a conformance kit reports every failure instead of stopping
+            checks.append(Check(name, False, f"{type(e).__name__}: {e}"))
+        return time.perf_counter() - t0
 
-    stranger = adapter.status(test_ref, requester_address="+27000000000")
-    unknown = adapter.status("ZZZ-999999", requester_address=test_number)
-    checks.append(Check("someone else's number is told nothing", stranger is None, repr(stranger)))
-    checks.append(Check("an unknown order looks the same as someone else's (no oracle)", unknown is None, repr(unknown)))
+    took = lookup("the order is told to the number on it", test_ref, test_number, True)
+    checks.append(Check(f"answers within {TIMEOUT_S:g} seconds", took < TIMEOUT_S, f"{took:.2f} s"))
+    lookup("someone else's number is told nothing", test_ref, "+27000000000", False)
+    lookup("an unknown order looks the same as someone else's (no oracle)", "ZZZ-999999", test_number, False)
 
     body = json.dumps({"ref": test_ref, "requester": test_number}).encode()
     ts, sig = sign(secret, body)

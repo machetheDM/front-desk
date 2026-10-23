@@ -33,15 +33,16 @@ To repeat it on your laptop (PowerShell, Docker Desktop running):
 
 ```powershell
 docker compose up -d db
-$env:PGPASSWORD = "ci-only"
-psql -h localhost -p 5433 -U postgres -c "CREATE DATABASE frontdesk"
-python -m frontdesk.db.migrate --dsn postgresql://postgres:ci-only@localhost:5433/frontdesk
-psql -h localhost -p 5433 -U postgres -d frontdesk -c "ALTER ROLE frontdesk_app LOGIN PASSWORD 'local-only'; GRANT CONNECT ON DATABASE frontdesk TO frontdesk_app"
-python -m frontdesk.demo_tenant --dsn postgresql://frontdesk_app:local-only@localhost:5433/frontdesk --write
-python -m frontdesk.drills model-down --dsn postgresql://frontdesk_app:local-only@localhost:5433/frontdesk --record docs/drills
+docker compose exec db psql -U postgres -c "CREATE DATABASE frontdesk"
+python -m frontdesk.db.migrate --dsn postgresql://postgres:local-only@localhost:5433/frontdesk
+docker compose exec db psql -U postgres -d frontdesk -c "ALTER ROLE frontdesk_app LOGIN PASSWORD 'local-app'; GRANT CONNECT ON DATABASE frontdesk TO frontdesk_app"
+python -m frontdesk.demo_tenant --dsn postgresql://frontdesk_app:local-app@localhost:5433/frontdesk --write
+python -m frontdesk.drills model-down --dsn postgresql://frontdesk_app:local-app@localhost:5433/frontdesk --record docs/drills
 ```
 
-You should see a table ending in `Result: 10 of 10 steps passed` and the command exits with 0.
+`psql` runs inside the database container, so nothing extra is installed on Windows. If the
+second line says the database already exists, carry on. You should see a table ending in
+`Result: 10 of 10 steps passed` and the command exits with 0.
 
 ## Run 2: AWS dev, with a real Bedrock failure (to do after DEPLOY.md step 17)
 

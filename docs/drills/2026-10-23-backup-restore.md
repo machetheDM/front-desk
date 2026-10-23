@@ -35,10 +35,13 @@ not just printing "pass". Record: [`2026-10-23-backup-restore.run.md`](2026-10-2
 4 of 4 steps. `backend/tests/test_restore.py` runs it in CI, and CI is set to fail, not skip,
 if the PostgreSQL client tools are missing.
 
-On your laptop (PowerShell, Docker Desktop, after the model-down drill's setup):
+CI runs this drill on every pull request, so running it on your laptop is optional. It needs
+the PostgreSQL 16 command-line tools (`pg_dump`, `pg_restore`): in the EDB PostgreSQL installer
+for Windows, tick only "Command Line Tools". Then, after the model-down drill's setup:
 
 ```powershell
-python -m frontdesk.drills backup-restore --admin-dsn postgresql://postgres:ci-only@localhost:5433/frontdesk --app-password local-only --record docs/drills
+$env:Path += ";C:\Program Files\PostgreSQL\16\bin"
+python -m frontdesk.drills backup-restore --admin-dsn postgresql://postgres:local-only@localhost:5433/frontdesk --app-password local-app --record docs/drills
 ```
 
 You should see `Result: 4 of 4 steps passed`.

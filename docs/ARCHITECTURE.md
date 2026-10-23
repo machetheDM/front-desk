@@ -51,9 +51,9 @@ Sources, in order of authority:
   the service is sold there. If the Region file has no such usage type, it is not.
 - **AWS documentation**, read through search results because `docs.aws.amazon.com` is blocked by
   this build container's network policy. Each such row says so.
-- **`scripts/check-regions.ps1`**, which the owner runs against the real account. Its output is
-  committed to `docs/evidence/region-check.json` and overrides everything above. Rows marked
-  *verify* are settled only by that run.
+- **`scripts/check-regions.ps1`**, which the owner runs against the real account (DEPLOY.md
+  step 14). Its output, region-check.json in docs/evidence, is committed once that run exists
+  (SEAM(region-check)) and overrides everything above. Rows marked *verify* are settled only by that run.
 
 | Capability | af-south-1 (Cape Town) | Evidence | Decision |
 |---|---|---|---|
