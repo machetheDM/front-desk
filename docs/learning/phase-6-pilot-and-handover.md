@@ -60,11 +60,12 @@ Check yourself: why does the erase require the assistant to be paused first?
 
 ## 5. The docs are tested like code
 
-Two real bugs were found this phase by treating documentation as executable. A test now
-parses every `python -m frontdesk.admin` line in the docs; its first run found that *every*
-documented command failed ("unrecognized arguments: --profile") and six examples were missing a
-required option. A CI step parses every PowerShell block with PowerShell's own parser; its first
-run found `<you>@gmail.com` placeholders, which are syntax errors in PowerShell.
+Real bugs were found this phase by treating documentation as executable. Every documented
+admin command failed ("unrecognized arguments: --profile", because the option was defined only
+before the subcommand); a test now parses every `python -m frontdesk.admin` line in the docs and
+docstrings, and its first run also found three examples missing a required option. A CI step
+parses every PowerShell block with PowerShell's own parser; its first run found
+`<you>@gmail.com` placeholders, which are syntax errors in PowerShell.
 
 > Interview line: "The owner pastes my commands, so my CI parses them. That found a bug that
 > would have failed on the first command of the deploy guide."
